@@ -151,20 +151,20 @@ $result = mysqli_query($conn, $sql);
   <!-- Menu de navegação -->
   <nav>
     <ul>
-      <li><a href="dashboard.php">Início</a></li>
+      <li><a href="dashboard.php">📊Início</a></li>
       <li><a href="cadastro_usuarios.php">Cadastrar Usuário</a></li>
-      <li><a href="cadastro_medicamento.php">Cadastrar Medicamento</a></li>
+      <li><a href="cadastro_medicamento.php">💊Cadastrar Medicamento</a></li>
       <li><a href="venda.php">Venda</a></li>
-      <li><a href="historico.php">Histórico</a></li>
-      <li><a href="estoque.php">Estoque</a></li>
-      <li><a href="logout.php">Sair</a></li>
+      <li><a href="historico.php">🧾Histórico</a></li>
+      <li><a href="estoque.php">📦Estoque</a></li>
+      <li><a href="logout.php">🚪Sair</a></li>
     </ul>
   </nav>
   
   <main>
     <div class="action-buttons">
       <a href="estoquepassado.php" class="button">Consultar Estoque do Mês Passado</a>
-      <a href="gerar_relatorio_estoque.php" class="button">Gerar Relatório de Estoque</a>
+      <a href="relatorio_estoque.php" class="button">Gerar Relatório de Estoque</a>
     </div>
     
     <div class="search-container">
