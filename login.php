@@ -2,16 +2,14 @@
 session_start();
 
 // Detalhes do banco de dados
-$servername = "localhost";
-$username = "root";
-$password = "";
-$database = "farmacia";
+define('DB_SERVER', 'localhost');
+define('DB_USER',   'root');
+define('DB_PASS',   '');
+define('DB_NAME',   'farmacia');
 
 // Função para conectar ao banco de dados
 function conectar_banco() {
-    global $servername, $username, $password, $database;
-    $conn = new mysqli($servername, $username, $password, $database);
-
+    $conn = new mysqli(DB_SERVER, DB_USER, DB_PASS, DB_NAME);
     if ($conn->connect_error) {
         die("Falha na conexão: " . $conn->connect_error);
     }
@@ -37,15 +35,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["entrar"])) {
 
     if ($resultado->num_rows > 0) {
         $row = $resultado->fetch_assoc();
-  
+
         // Verifica se a senha está correta
         if ($senha === $row['senha']) {
             // Regenerar ID de sessão para segurança
             session_regenerate_id(true);
 
-            // Criar sessão do usuário e armazenar o nível de privilégio (tipo_usuario)
+            // Criar sessão do usuário
             $_SESSION['id'] = $row['id'];
-            $_SESSION['nome_usuario'] = $row['nome']; // Armazena o nome do usuário
+            $_SESSION['id_usuario'] = $row['id']; // Agora está correto
+            $_SESSION['nome_usuario'] = $row['nome'];
             $_SESSION['email'] = $row['email'];
             $_SESSION['tipo_usuario'] = $row['tipo_usuario'];
             $_SESSION['usuario_logado'] = true;
@@ -60,7 +59,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["entrar"])) {
         $erro = "E-mail não encontrado!";
     }
 
-    // Fechar conexão
     $stmt->close();
     $conn->close();
 }
@@ -73,7 +71,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["entrar"])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <style>
-        /* Resetando os estilos padrões */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Arial', sans-serif;
@@ -82,7 +79,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["entrar"])) {
             justify-content: center;
             align-items: center;
             background: url('login.jpg') no-repeat center center/cover;
-            background-size: cover;
         }
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;

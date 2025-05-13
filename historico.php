@@ -11,7 +11,8 @@ if ($conn->connect_error) {
 }
 
 $data = isset($_GET['data']) ? $_GET['data'] : date('Y-m-d');
-$usuario_logado = $_SESSION['usuario_logado'] ?? 'Desconhecido';
+$usuario_logado = $_SESSION['nome_usuario'] ?? 'Desconhecido';
+
 
 // Consultar vendas do dia
 $sql = "SELECT v.*, u.nome AS usuario, m.nome AS medicamento, (v.quantidade * v.preco_unitario) AS total

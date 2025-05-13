@@ -1,45 +1,79 @@
 <?php
-// Conexão com o banco de dados
-function conectar_banco() {
-    $servername = "localhost";
-    $username   = "root";
-    $password   = "";
-    $dbname     = "farmacia";
+session_start();
 
-    $conn = mysqli_connect($servername, $username, $password, $dbname);
-    if (!$conn) {
-        die("Conexão falhou: " . mysqli_connect_error());
+// Verifica se o usuário está logado
+if (!isset($_SESSION['id_usuario']) || !isset($_SESSION['nome_usuario'])) {
+    echo "<script>alert('Você precisa estar logado para realizar vendas.'); window.location.href='login.php';</script>";
+    exit;
+}
+
+echo "<p>Usuário logado: " . htmlspecialchars($_SESSION['nome_usuario']) . "</p>";
+
+// Configurações do banco
+define('DB_SERVER', 'localhost');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+define('DB_NAME', 'farmacia');
+
+function conectar_banco() {
+    $conn = new mysqli(DB_SERVER, DB_USER, DB_PASS, DB_NAME);
+    if ($conn->connect_error) {
+        die('Falha na conexão: ' . $conn->connect_error);
     }
     return $conn;
 }
 
-// Processa a venda
-if (isset($_POST['vender'])) {
-    $id_medicamento = $_POST['id_medicamento'];
-    $quantidade_venda = $_POST['quantidade_venda'];
-    $preco_unitario = $_POST['preco_unitario'] ?? 0;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vender'])) {
+    $id_medicamento   = isset($_POST['id_medicamento']) ? (int) $_POST['id_medicamento'] : 0;
+    $quantidade_venda = isset($_POST['quantidade_venda']) ? (int) $_POST['quantidade_venda'] : 0;
+    $preco_unitario   = isset($_POST['preco_unitario']) ? (float) $_POST['preco_unitario'] : 0.0;
+    $id_usuario       = (int) $_SESSION['id_usuario'];
+
+    if ($id_medicamento <= 0 || $quantidade_venda <= 0) {
+        echo "<script>alert('Dados inválidos para realizar venda.');</script>";
+        exit;
+    }
 
     $conn = conectar_banco();
-    $sql = "SELECT quantidade FROM medicamentos WHERE id = $id_medicamento";
-    $result = mysqli_query($conn, $sql);
-    $row = mysqli_fetch_assoc($result);
 
-    if (!$row) {
+    $stmt = $conn->prepare("SELECT quantidade FROM medicamentos WHERE id = ?");
+    $stmt->bind_param('i', $id_medicamento);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 0) {
         echo "<script>alert('Medicamento não encontrado');</script>";
     } else {
-        $estoque_atual = $row['quantidade'];
+        $row = $result->fetch_assoc();
+        $estoque_atual = (int) $row['quantidade'];
+
         if ($estoque_atual <= 0) {
             echo "<script>alert('Medicamento sem estoque');</script>";
-        } else if ($quantidade_venda > $estoque_atual) {
+        } elseif ($quantidade_venda > $estoque_atual) {
             echo "<script>alert('Quantidade desejada excede o estoque disponível');</script>";
         } else {
             $novo_estoque = $estoque_atual - $quantidade_venda;
-            $sql_update = "UPDATE medicamentos SET quantidade = $novo_estoque WHERE id = $id_medicamento";
-            mysqli_query($conn, $sql_update);
-            echo "<script>alert('Venda realizada com sucesso! Estoque atualizado.');</script>";
+
+            $up = $conn->prepare("UPDATE medicamentos SET quantidade = ? WHERE id = ?");
+            $up->bind_param('ii', $novo_estoque, $id_medicamento);
+            $up->execute();
+            $up->close();
+
+            $data_venda = date('Y-m-d');
+            $ins = $conn->prepare("INSERT INTO vendas (id_medicamento, quantidade, preco_unitario, id_usuario, data_venda) VALUES (?, ?, ?, ?, ?)");
+            $ins->bind_param('iiids', $id_medicamento, $quantidade_venda, $preco_unitario, $id_usuario, $data_venda);
+
+            if ($ins->execute()) {
+                echo "<script>alert('Venda realizada com sucesso! Estoque atualizado.');</script>";
+            } else {
+                echo "<script>alert('Erro ao registrar a venda: " . $ins->error . "');</script>";
+            }
+            $ins->close();
         }
     }
-    mysqli_close($conn);
+
+    $stmt->close();
+    $conn->close();
 }
 ?>
 
@@ -47,170 +81,38 @@ if (isset($_POST['vender'])) {
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Venda de Medicamentos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    /* Reset básico */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f2f2f2;
-      color: #333;
-    }
-    header {
-      background-color: #2c3e50;
-      padding: 20px;
-      text-align: center;
-      color: #fff;
-      font-size: 24px;
-      font-weight: bold;
-    }
-    /* Menu de navegação */
-    nav {
-      background-color: #34495e;
-      padding: 10px 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    nav ul {
-      list-style: none;
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      flex-wrap: wrap;
-    }
-    nav ul li a {
-      color: #fff;
-      text-decoration: none;
-      font-size: 16px;
-      font-weight: 500;
-      padding: 8px 15px;
-      transition: background-color 0.3s ease;
-    }
-    nav ul li a:hover {
-      background-color: #4CAF50;
-      border-radius: 4px;
-    }
-    main {
-      max-width: 1200px;
-      margin: 30px auto;
-      padding: 20px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 30px;
-      justify-content: space-between;
-    }
-    .form-section, .table-section {
-      flex: 1 1 500px;
-      background: #fafafa;
-      padding: 15px;
-      border-radius: 8px;
-    }
-    .form-section form {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-    label {
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-    input[type="text"],
-    input[type="number"],
-    select {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 16px;
-      width: 100%;
-    }
-    button {
-      padding: 12px;
-      border: none;
-      border-radius: 4px;
-      background-color: #4CAF50;
-      color: #fff;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    .search-container {
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .search-container input[type="text"] {
-      width: 90%;
-      max-width: 400px;
-      padding: 10px;
-      border: 1px solid #bbb;
-      border-radius: 4px;
-      font-size: 16px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-    th, td {
-      text-align: center;
-      padding: 12px;
-      border: 1px solid #ddd;
-    }
-    th {
-      background-color: #4CAF50;
-      color: #fff;
-    }
-    /* Media queries para responsividade */
-    @media (max-width: 1024px) {
-      .container {
-        flex-direction: column;
-      }
-      nav ul {
-        justify-content: center;
-      }
-    }
-    @media (max-width: 600px) {
-      header {
-        font-size: 20px;
-        padding: 15px;
-      }
-      nav ul li a {
-        padding: 8px 10px;
-        font-size: 14px;
-      }
-      input[type="text"],
-      input[type="number"],
-      select {
-        font-size: 14px;
-      }
-      button {
-        font-size: 14px;
-        padding: 10px;
-      }
-      th, td {
-        padding: 8px;
-      }
-      .search-container input[type="text"] {
-        font-size: 14px;
-      }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f5f5f5; color: #333; }
+    header { background-color: #1976d2; color: white; padding: 1rem; text-align: center; font-size: 1.5rem; }
+    nav { background-color: #1565c0; padding: 0.5rem; }
+    nav ul { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; }
+    nav ul li { margin: 0.5rem; }
+    nav ul li a { color: white; text-decoration: none; padding: 0.5rem 1rem; background-color: #0d47a1; border-radius: 5px; transition: background-color 0.3s; }
+    nav ul li a:hover { background-color: #82b1ff; color: black; }
+    main { padding: 2rem; }
+    .container { display: flex; flex-direction: column; gap: 2rem; }
+    .form-section, .table-section { background-color: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    form { display: flex; flex-direction: column; gap: 1rem; }
+    form label { font-weight: bold; }
+    form select, form input, form button { padding: 0.8rem; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; }
+    form button { background-color: #1976d2; color: white; border: none; cursor: pointer; transition: background-color 0.3s; }
+    form button:hover { background-color: #1565c0; }
+    .search-container { margin-bottom: 1rem; }
+    .search-container input { width: 100%; padding: 0.7rem;	border-radius: 5px; border: 1px solid #ccc; font-size: 1rem; }
+    table { width: 100%;	border-collapse: collapse; }
+    table th, table td { padding: 1rem; text-align: left; border-bottom: 1px solid #ddd; }
+    table th { background-color: #eeeeee; }
+    @media (min-width: 768px) {
+      .container { flex-direction: row; justify-content: space-between; }
+      .form-section, .table-section { width: 48%; }
     }
   </style>
 </head>
 <body>
   <header>Venda de Medicamentos</header>
-  
-  <!-- Menu de navegação -->
   <nav>
     <ul>
       <li><a href="dashboard.php">Início</a></li>
@@ -222,107 +124,76 @@ if (isset($_POST['vender'])) {
       <li><a href="logout.php">Sair</a></li>
     </ul>
   </nav>
-  
   <main>
     <div class="container">
-      <!-- Seção do Formulário -->
       <div class="form-section">
         <form action="venda.php" method="post">
-          <label for="id_medicamento">Selecione o Medicamento:</label>
+          <label for="id_medicamento">Seleccione o Medicamento:</label>
           <select name="id_medicamento" id="id_medicamento" required onchange="updatePreco()">
             <option value="">Escolha um medicamento</option>
             <?php
               $conn = conectar_banco();
-              $sql = "SELECT id, nome, preco, quantidade FROM medicamentos";
-              $resultForm = mysqli_query($conn, $sql);
-              if (mysqli_num_rows($resultForm) > 0) {
-                  while($row = mysqli_fetch_assoc($resultForm)) {
-                      echo "<option value='" . $row["id"] . "' data-price='" . $row["preco"] . "' data-stock='" . $row["quantidade"] . "'>" 
-                           . $row["nome"] . " - FCFA " . number_format($row["preco"], 2, ',', '.') . "</option>";
-                  }
+              $res = $conn->query("SELECT id, nome, preco, quantidade FROM medicamentos");
+              if ($res && $res->num_rows) {
+                while ($m = $res->fetch_assoc()) {
+                  echo "<option value='{$m['id']}' data-price='{$m['preco']}'>{$m['nome']} - FCFA " . number_format($m['preco'], 2, ',', '.') . "</option>";
+                }
               } else {
-                  echo "<option value=''>Nenhum medicamento cadastrado</option>";
+                echo "<option value=''>Nenhum medicamento cadastrado</option>";
               }
-              mysqli_close($conn);
+              $conn->close();
             ?>
           </select>
-
           <label for="preco_unitario">Preço Unitário:</label>
           <input type="number" step="0.01" name="preco_unitario" id="preco_unitario" readonly required>
-          
           <label for="quantidade_venda">Quantidade para Venda:</label>
           <input type="number" name="quantidade_venda" id="quantidade_venda" min="1" required>
-          
           <button type="submit" name="vender">Realizar Venda</button>
         </form>
       </div>
-      
-      <!-- Seção da Tabela com Barra de Pesquisa -->
       <div class="table-section">
         <div class="search-container">
           <input type="text" id="searchInput" placeholder="Buscar medicamento..." onkeyup="filtrarMedicamentos()">
         </div>
         <table id="medicamentosTable">
           <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nome</th>
-              <th>Preço</th>
-              <th>Estoque</th>
-            </tr>
+            <tr><th>ID</th><th>Nome</th><th>Preço</th><th>Estoque</th></tr>
           </thead>
           <tbody>
             <?php
               $conn = conectar_banco();
-              $sql = "SELECT id, nome, preco, quantidade FROM medicamentos";
-              $resultTable = mysqli_query($conn, $sql);
-              if (mysqli_num_rows($resultTable) > 0) {
-                  while($row = mysqli_fetch_assoc($resultTable)) {
-                      echo "<tr>";
-                      echo "<td>" . $row["id"] . "</td>";
-                      echo "<td>" . $row["nome"] . "</td>";
-                      echo "<td>FCFA " . number_format($row["preco"], 2, ',', '.') . "</td>";
-                      echo "<td>" . $row["quantidade"] . "</td>";
-                      echo "</tr>";
-                  }
+              $res = $conn->query("SELECT id, nome, preco, quantidade FROM medicamentos");
+              if ($res && $res->num_rows) {
+                while ($m = $res->fetch_assoc()) {
+                  echo "<tr><td>{$m['id']}</td><td>{$m['nome']}</td><td>FCFA " . number_format($m['preco'], 2, ',', '.') . "</td><td>{$m['quantidade']}</td></tr>";
+                }
               } else {
-                  echo "<tr><td colspan='4'>Nenhum medicamento encontrado.</td></tr>";
+                echo "<tr><td colspan='4'>Nenhum medicamento encontrado.</td></tr>";
               }
-              mysqli_close($conn);
+              $conn->close();
             ?>
           </tbody>
         </table>
       </div>
     </div>
   </main>
-  
   <script>
-    // Atualiza o campo de preço unitário com base na seleção do medicamento
     function updatePreco() {
-      var select = document.getElementById("id_medicamento");
-      var precoInput = document.getElementById("preco_unitario");
-      var selectedOption = select.options[select.selectedIndex];
-      precoInput.value = selectedOption.getAttribute("data-price") || "";
+      var sel = document.getElementById('id_medicamento');
+      var inp = document.getElementById('preco_unitario');
+      inp.value = sel.options[sel.selectedIndex].getAttribute('data-price') || '';
     }
-    
-    // Filtra os medicamentos na tabela de acordo com a pesquisa
-    function filtrarMedicamentos() {
-      var input = document.getElementById("searchInput");
-      var filter = input.value.toUpperCase();
-      var table = document.getElementById("medicamentosTable");
-      var tr = table.getElementsByTagName("tr");
 
-      for (var i = 1; i < tr.length; i++) {
-        var td = tr[i].getElementsByTagName("td")[1];
-        if (td) {
-          var txtValue = td.textContent || td.innerText;
-          tr[i].style.display = (txtValue.toUpperCase().indexOf(filter) > -1) ? "" : "none";
-        }
+    function filtrarMedicamentos() {
+      var filter = document.getElementById('searchInput').value.toUpperCase();
+      var trs = document.getElementById('medicamentosTable').getElementsByTagName('tr');
+      for (var i = 1; i < trs.length; i++) {
+        var td = trs[i].getElementsByTagName('td')[1];
+        trs[i].style.display = td.textContent.toUpperCase().indexOf(filter) > -1 ? '' : 'none';
       }
     }
-    
-    // Atualiza o preço ao carregar a página
-    document.addEventListener("DOMContentLoaded", updatePreco);
+
+    document.addEventListener('DOMContentLoaded', updatePreco);
   </script>
 </body>
 </html>

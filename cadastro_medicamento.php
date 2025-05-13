@@ -1,6 +1,9 @@
 <?php
 session_start();
-
+if (!isset($_SESSION['usuario_logado']) || $_SESSION['tipo_usuario'] !== 'admin') {
+    echo "<script>alert('Você não tem permissão para acessar esta página.'); window.location.href='dashboard.php';</script>";
+    exit;
+}
 function conectar_banco() {
     $conn = new mysqli("localhost", "root", "", "farmacia");
     if ($conn->connect_error) {
