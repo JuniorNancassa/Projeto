@@ -69,8 +69,7 @@ $nome_usuario = $_SESSION['nome_usuario'];
         }
 
         .navbar ul li a:hover {
-            background: #4CAF50;
-            color: white;
+            color: gray;
         }
 
         /* Estilo do container principal */
@@ -99,8 +98,8 @@ $nome_usuario = $_SESSION['nome_usuario'];
 
         /* Footer estilizado */
         .footer {
-            background-color: #2c3e50;
-            color: white;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: black;
             text-align: center;
             padding: 10px 0;
             position: fixed;
@@ -141,13 +140,13 @@ $nome_usuario = $_SESSION['nome_usuario'];
 <!-- Navbar -->
 <nav class="navbar">
     <ul>
-        <li><a href="dashboard.php">Início</a></li>
-        <li><a href="cadastro_usuarios.php">Cadastrar Usuário</a></li>
-        <li><a href="cadastro_medicamento.php">Cadastrar Medicamento</a></li>
-        <li><a href="venda.php">Venda</a></li>
-        <li><a href="historico.php">Histórico</a></li>
-        <li><a href="estoque.php">Estoque</a></li>
-        <li><a href="logout.php" class="logout">Sair</a></li>
+        <li><a href="dashboard.php">🏠Início</a></li>
+        <li><a href="cadastro_usuarios.php">👤Cadastrar Usuário</a></li>
+        <li><a href="cadastro_medicamento.php">💊Cadastrar Medicamento</a></li>
+        <li><a href="venda.php">🛒Venda</a></li>
+        <li><a href="historico.php">📈Histórico</a></li>
+        <li><a href="estoque.php">📦Estoque</a></li>
+        <li><a href="logout.php" class="logout">🚪Sair</a></li>
     </ul>
 </nav>
 

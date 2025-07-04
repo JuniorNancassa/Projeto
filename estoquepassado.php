@@ -1,5 +1,4 @@
 <?php
-
 // Conexão com o banco de dados
 function conectar_banco() {
     $servername = "localhost";
@@ -7,10 +6,12 @@ function conectar_banco() {
     $password   = "";
     $dbname     = "farmacia";
 
-    $conn = mysqli_connect($servername, $username, $password, $dbname);
-    if (!$conn) {
-        die("Conexão falhou: " . mysqli_connect_error());
+    $conn = new mysqli($servername, $username, $password, $dbname);
+    if ($conn->connect_error) {
+        die("Conexão falhou: " . $conn->connect_error);
     }
+    // Setar charset para evitar problemas com acentuação
+    $conn->set_charset("utf8");
     return $conn;
 }
 
@@ -19,25 +20,35 @@ $start_date = date("Y-m-01", strtotime("first day of last month"));
 $end_date   = date("Y-m-t", strtotime("last month"));
 
 $conn = conectar_banco();
+
 $sql = "SELECT h.id, m.nome, h.quantidade, h.data 
         FROM historico_estoque h 
         JOIN medicamentos m ON h.id_medicamento = m.id 
-        WHERE h.data BETWEEN '$start_date' AND '$end_date'
+        WHERE h.data BETWEEN ? AND ?
         ORDER BY h.data DESC";
-$result = mysqli_query($conn, $sql);
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ss", $start_date, $end_date);
+$stmt->execute();
+$result = $stmt->get_result();
+
+// Função para traduzir o nome do mês
+function mesPorExtenso($data) {
+    setlocale(LC_TIME, 'pt_BR.UTF-8', 'portuguese');
+    return strftime('%B %Y', strtotime($data));
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Consulta de Estoque do Mês Passado</title>
   <style>
-    /* Reset e estilos básicos */
+    /* Seu CSS aqui - mantive o mesmo que enviou */
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f2f2f2; color: #333; 
-       background-image: "venda.jpg"; }
-    
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f2f2f2; color: #333; }
     header {
       background-color: #2c3e50;
       padding: 20px;
@@ -46,8 +57,6 @@ $result = mysqli_query($conn, $sql);
       font-size: 24px;
       font-weight: bold;
     }
-    
-    /* Menu de navegação */
     nav {
       background-color: #34495e;
       padding: 10px 0;
@@ -72,7 +81,6 @@ $result = mysqli_query($conn, $sql);
       background-color: #4CAF50;
       border-radius: 4px;
     }
-    
     main {
       max-width: 1200px;
       margin: 30px auto;
@@ -81,9 +89,7 @@ $result = mysqli_query($conn, $sql);
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    
     h2 { text-align: center; margin-bottom: 20px; }
-    
     table {
       width: 100%;
       border-collapse: collapse;
@@ -95,8 +101,6 @@ $result = mysqli_query($conn, $sql);
       border: 1px solid #ddd;
     }
     th { background-color: #4CAF50; color: #fff; }
-    
-    /* Footer */
     footer {
       background-color: #2c3e50;
       color: #fff;
@@ -104,19 +108,36 @@ $result = mysqli_query($conn, $sql);
       padding: 15px;
       margin-top: 30px;
     }
-    
-    /* Responsividade */
     @media (max-width: 600px) {
       header { font-size: 20px; padding: 15px; }
       nav ul li a { padding: 8px 10px; font-size: 14px; }
       th, td { padding: 8px; font-size: 14px; }
     }
+    /* Botão */
+    .btn-pdf {
+      display: block;
+      margin: 15px auto;
+      padding: 12px 20px;
+      background-color: #4CAF50;
+      color: white;
+      font-weight: 600;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+      text-align: center;
+      text-decoration: none;
+      width: 220px;
+    }
+    .btn-pdf:hover {
+      background-color: #45a049;
+    }
   </style>
 </head>
 <body>
   <header>Consulta de Estoque do Mês Passado</header>
-  
-  <!-- Menu de navegação -->
+
   <nav>
     <ul>
       <li><a href="dashboard.php">Início</a></li>
@@ -128,9 +149,12 @@ $result = mysqli_query($conn, $sql);
       <li><a href="logout.php">Sair</a></li>
     </ul>
   </nav>
-  
+
   <main>
-    <h2>Estoque Registrado de <?php echo date("F Y", strtotime($start_date)); ?></h2>
+    <h2>Estoque Registrado de <?php echo ucfirst(mesPorExtenso($start_date)); ?></h2>
+    
+    <a href="relatorio_estoque_pdf.php?start_date=<?= $start_date ?>&end_date=<?= $end_date ?>" class="btn-pdf" target="_blank">Gerar Relatório PDF</a>
+    
     <table>
       <thead>
         <tr>
@@ -142,25 +166,25 @@ $result = mysqli_query($conn, $sql);
       </thead>
       <tbody>
         <?php
-        if (mysqli_num_rows($result) > 0) {
-          while ($row = mysqli_fetch_assoc($result)) {
+        if ($result->num_rows > 0) {
+          while ($row = $result->fetch_assoc()) {
               echo "<tr>";
-              echo "<td>" . $row["id"] . "</td>";
-              echo "<td>" . $row["nome"] . "</td>";
-              echo "<td>" . $row["quantidade"] . "</td>";
-              // Exibe a data no formato dd/mm/aaaa
+              echo "<td>" . htmlspecialchars($row["id"]) . "</td>";
+              echo "<td>" . htmlspecialchars($row["nome"]) . "</td>";
+              echo "<td>" . htmlspecialchars($row["quantidade"]) . "</td>";
               echo "<td>" . date("d/m/Y", strtotime($row["data"])) . "</td>";
               echo "</tr>";
           }
         } else {
           echo "<tr><td colspan='4'>Nenhum registro de estoque encontrado para o mês passado.</td></tr>";
         }
-        mysqli_close($conn);
+        $stmt->close();
+        $conn->close();
         ?>
       </tbody>
     </table>
   </main>
-  
+
   <footer>
     <p>&copy; <?php echo date("Y"); ?> Farmácia. Todos os direitos reservados.</p>
   </footer>

@@ -4,14 +4,9 @@ if (!isset($_SESSION['usuario_logado']) || $_SESSION['tipo_usuario'] !== 'admin'
     echo "<script>alert('Você não tem permissão para acessar esta página.'); window.location.href='dashboard.php';</script>";
     exit;
 }
-// Conexão com o banco de dados
-function conectar_banco() {
-    $servername = "localhost";
-    $username   = "root";
-    $password   = "";
-    $dbname     = "farmacia";
 
-    $conn = mysqli_connect($servername, $username, $password, $dbname);
+function conectar_banco() {
+    $conn = mysqli_connect("localhost", "root", "", "farmacia");
     if (!$conn) {
         die("Conexão falhou: " . mysqli_connect_error());
     }
@@ -26,205 +21,175 @@ $result = mysqli_query($conn, $sql);
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Estoque de Medicamentos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    /* Reset básico */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f2f2f2; color: #333; }
-    
-    header {
-      background-color: #2c3e50;
-      padding: 20px;
-      text-align: center;
-      color: #fff;
-      font-size: 24px;
-      font-weight: bold;
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
     }
-    
-    /* Menu de navegação */
+    header, footer {
+      background-color: #0d6efd;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
     nav {
-      background-color: #34495e;
-      padding: 10px 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background-color: #0d6efd;
+      padding: 10px;
     }
     nav ul {
       list-style: none;
       display: flex;
       justify-content: center;
-      gap: 30px;
-      flex-wrap: wrap;
+      gap: 20px;
+      padding: 0;
     }
     nav ul li a {
-      color: #fff;
+      color: white;
       text-decoration: none;
-      font-size: 16px;
-      font-weight: 500;
-      padding: 8px 15px;
-      transition: background-color 0.3s ease;
+      font-weight: bold;
     }
-    nav ul li a:hover {
-      background-color: #4CAF50;
-      border-radius: 4px;
-    }
-    
     main {
-      max-width: 1200px;
+      max-width: 1000px;
       margin: 30px auto;
+      background: white;
       padding: 20px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
     }
-    
-    .action-buttons {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .button {
-      display: inline-block;
-      padding: 10px 15px;
-      margin: 5px;
-      background-color: #4CAF50;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 5px;
-      transition: background-color 0.3s ease;
-    }
-    .button:hover { background-color: #45a049; }
-    
-    .search-container {
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .search-container input[type="text"] {
-      width: 90%;
-      max-width: 400px;
-      padding: 10px;
-      border: 1px solid #bbb;
-      border-radius: 4px;
-      font-size: 16px;
-    }
-    
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 15px;
+      margin-top: 20px;
     }
     th, td {
+      border: 1px solid #ccc;
       text-align: center;
-      padding: 12px;
-      border: 1px solid #ddd;
+      padding: 10px;
     }
-    th { background-color: #4CAF50; color: #fff; }
-    
-    /* Colorização dinâmica */
-    .full { background-color: #c8e6c9; }    /* Verde: estoque cheio */
-    .medium { background-color: #ffe082; }  /* Âmbar: estoque médio */
-    .low { background-color: #ffccbc; }     /* Vermelho: estoque baixo */
-    
-    /* Footer */
-    footer {
-      background-color: #2c3e50;
-      color: #fff;
+    th {
+      background-color: #0d6efd;
+      color: white;
+    }
+    .status-icon {
+      width: 12px;
+      height: 12px;
+      display: inline-block;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+    .red { background-color: red; }
+    .yellow { background-color: gold; }
+    .green { background-color: green; }
+    .search-container {
       text-align: center;
-      padding: 15px;
-      margin-top: 30px;
+      margin-bottom: 20px;
     }
-    
-    /* Responsividade */
-    @media (max-width: 1024px) {
-      nav ul { justify-content: center; }
-    }
-    @media (max-width: 600px) {
-      header { font-size: 20px; padding: 15px; }
-      nav ul li a { padding: 8px 10px; font-size: 14px; }
-      th, td { padding: 8px; font-size: 14px; }
-      .button { padding: 8px 12px; font-size: 14px; }
-      .search-container input[type="text"] { font-size: 14px; }
+    .search-container input {
+      padding: 8px;
+      width: 300px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
-  <header>Estoque de Medicamentos</header>
-  
-  <!-- Menu de navegação -->
+  <header>📦 Estoque de Medicamentos</header>
+
   <nav>
     <ul>
-      <li><a href="dashboard.php">📊Início</a></li>
-      <li><a href="cadastro_usuarios.php">Cadastrar Usuário</a></li>
-      <li><a href="cadastro_medicamento.php">💊Cadastrar Medicamento</a></li>
-      <li><a href="venda.php">Venda</a></li>
-      <li><a href="historico.php">🧾Histórico</a></li>
-      <li><a href="estoque.php">📦Estoque</a></li>
-      <li><a href="logout.php">🚪Sair</a></li>
+      <li><a href="dashboard.php">🏠 Início</a></li>
+      <li><a href="cadastro_usuarios.php">👤 Usuários</a></li>
+      <li><a href="cadastro_medicamento.php">💊 Medicamentos</a></li>
+      <li><a href="venda.php">🛒 Venda</a></li>
+      <li><a href="historico.php">📈 Histórico</a></li>
+      <li><a href="estoque.php">📦 Estoque</a></li>
+      <li><a href="logout.php">🚪 Sair</a></li>
     </ul>
   </nav>
-  
+
   <main>
-    <div class="action-buttons">
-      <a href="estoquepassado.php" class="button">Consultar Estoque do Mês Passado</a>
-      <a href="relatorio_estoque.php" class="button">Gerar Relatório de Estoque</a>
-    </div>
-    
     <div class="search-container">
-      <input type="text" id="searchInput" placeholder="Buscar medicamento..." onkeyup="filtrarMedicamentos()">
+      <input type="text" id="searchInput" onkeyup="filtrarMedicamentos()" placeholder="Buscar medicamento...">
     </div>
-    
+    <div style="text-align: right; margin-bottom: 10px;">
+  <form action="relatorio_estoque.php" method="post" target="_blank">
+    <button type="submit" style="background-color:#0d6efd; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">
+      📄 Gerar Relatório PDF
+    </button>
+  </form>
+</div>
+
+
     <table id="medicamentosTable">
       <thead>
         <tr>
           <th>ID</th>
           <th>Nome</th>
           <th>Quantidade</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody>
         <?php
         if (mysqli_num_rows($result) > 0) {
             while ($row = mysqli_fetch_assoc($result)) {
-                // Define os thresholds para colorização (ajuste conforme necessário)
-                if ($row["quantidade"] >= 100) {
-                    $class = "full";
-                } elseif ($row["quantidade"] >= 50) {
-                    $class = "medium";
+                $qtd = (int)$row['quantidade'];
+                if ($qtd <= 50) {
+                    $status = "<span class='status-icon red'></span><span style='color:red;'>Baixo</span>";
+                } elseif ($qtd <= 100) {
+                    $status = "<span class='status-icon yellow'></span><span style='color:gold;'>Médio</span>";
                 } else {
-                    $class = "low";
+                    $status = "<span class='status-icon green'></span><span style='color:green;'>Cheio</span>";
                 }
-                echo "<tr class='$class'>";
-                echo "<td>" . $row["id"] . "</td>";
-                echo "<td>" . $row["nome"] . "</td>";
-                echo "<td>" . $row["quantidade"] . "</td>";
-                echo "</tr>";
+
+                echo "<tr>
+                        <td>{$row['id']}</td>
+                        <td>{$row['nome']}</td>
+                        <td>{$qtd}</td>
+                        <td>{$status}</td>
+                      </tr>";
             }
         } else {
-            echo "<tr><td colspan='3'>Nenhum medicamento cadastrado</td></tr>";
+            echo "<tr><td colspan='4'>Nenhum medicamento encontrado.</td></tr>";
         }
         mysqli_close($conn);
         ?>
       </tbody>
     </table>
   </main>
-  
+
   <footer>
-    <p>&copy; 2025 Farmácia. Todos os direitos reservados.</p>
+    &copy; 2025 Sistema de Gestão Farmacêutica
   </footer>
-  
+
   <script>
-    // Função para filtrar os medicamentos na tabela conforme o nome
-    function filtrarMedicamentos() {
-      var input = document.getElementById("searchInput");
-      var filter = input.value.toUpperCase();
-      var table = document.getElementById("medicamentosTable");
-      var tr = table.getElementsByTagName("tr");
-      for (var i = 1; i < tr.length; i++) {
-        var td = tr[i].getElementsByTagName("td")[1];
-        if (td) {
-          var txtValue = td.textContent || td.innerText;
-          tr[i].style.display = (txtValue.toUpperCase().indexOf(filter) > -1) ? "" : "none";
-        }
+  function filtrarMedicamentos() {
+    const input = document.getElementById("searchInput").value.toUpperCase();
+    const table = document.getElementById("medicamentosTable");
+    const linhas = table.getElementsByTagName("tr");
+
+    for (let i = 1; i < linhas.length; i++) {
+      const colId = linhas[i].getElementsByTagName("td")[0];
+      const colNome = linhas[i].getElementsByTagName("td")[1];
+      const colQtd = linhas[i].getElementsByTagName("td")[2];
+
+      if (colId && colNome && colQtd) {
+        const id = colId.textContent || colId.innerText;
+        const nome = colNome.textContent || colNome.innerText;
+        const qtd = colQtd.textContent || colQtd.innerText;
+
+        const corresponde = id.toUpperCase().includes(input) ||
+                            nome.toUpperCase().includes(input) ||
+                            qtd.toUpperCase().includes(input);
+
+        linhas[i].style.display = corresponde ? "" : "none";
       }
     }
-  </script>
+  }
+</script>
+
 </body>
 </html>

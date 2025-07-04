@@ -13,7 +13,6 @@ if ($conn->connect_error) {
 $data = isset($_GET['data']) ? $_GET['data'] : date('Y-m-d');
 $usuario_logado = $_SESSION['nome_usuario'] ?? 'Desconhecido';
 
-
 // Consultar vendas do dia
 $sql = "SELECT v.*, u.nome AS usuario, m.nome AS medicamento, (v.quantidade * v.preco_unitario) AS total
         FROM vendas v
@@ -45,17 +44,41 @@ $stmt_resumo->bind_param("s", $data);
 $stmt_resumo->execute();
 $resumo = $stmt_resumo->get_result();
 
-// Dados para gráficos (vendas do mês)
-$labels = [];
-$valores = [];
-$grafico = $conn->query("SELECT DATE_FORMAT(data_venda, '%d/%m') as dia, SUM(quantidade * preco_unitario) as total 
-                         FROM vendas 
-                         WHERE MONTH(data_venda) = MONTH(CURDATE()) AND YEAR(data_venda) = YEAR(CURDATE())
-                         GROUP BY dia ORDER BY data_venda");
-while ($g = $grafico->fetch_assoc()) {
-    $labels[] = $g['dia'];
-    $valores[] = (float)$g['total'];
+// Dados para gráfico circular de vendas por dia (participação percentual)
+$grafico_dias = $conn->query("SELECT DATE_FORMAT(data_venda, '%d/%m') as dia, SUM(quantidade * preco_unitario) as total 
+                             FROM vendas 
+                             WHERE MONTH(data_venda) = MONTH(CURDATE()) AND YEAR(data_venda) = YEAR(CURDATE())
+                             GROUP BY dia ORDER BY data_venda");
+$labels_dias = [];
+$valores_dias = [];
+while ($g = $grafico_dias->fetch_assoc()) {
+    $labels_dias[] = $g['dia'];
+    $valores_dias[] = (float)$g['total'];
 }
+
+// Dados para gráfico circular de vendas por medicamento (participação percentual)
+$grafico_medicamentos = $conn->query("SELECT m.nome AS medicamento, SUM(v.quantidade * v.preco_unitario) AS total
+                                     FROM vendas v
+                                     JOIN medicamentos m ON v.id_medicamento = m.id
+                                     WHERE MONTH(v.data_venda) = MONTH(CURDATE()) AND YEAR(v.data_venda) = YEAR(CURDATE())
+                                     GROUP BY v.id_medicamento
+                                     ORDER BY total DESC");
+$labels_medicamentos = [];
+$valores_medicamentos = [];
+while ($g = $grafico_medicamentos->fetch_assoc()) {
+    $labels_medicamentos[] = $g['medicamento'];
+    $valores_medicamentos[] = (float)$g['total'];
+}
+
+// Medicamento mais vendido do mês
+$mais_vendido = $conn->query("SELECT m.nome, SUM(v.quantidade) AS total_qtd
+                              FROM vendas v
+                              JOIN medicamentos m ON v.id_medicamento = m.id
+                              WHERE MONTH(v.data_venda) = MONTH(CURDATE()) AND YEAR(v.data_venda) = YEAR(CURDATE())
+                              GROUP BY v.id_medicamento
+                              ORDER BY total_qtd DESC
+                              LIMIT 1")->fetch_assoc();
+
 ?>
 <!DOCTYPE html>
 <html lang="pt">
@@ -104,7 +127,7 @@ while ($g = $grafico->fetch_assoc()) {
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#">Gestão Farmacêutica <img src="" alt=""></a>
+        <a class="navbar-brand" href="#">Gestão Farmacêutica</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -132,6 +155,12 @@ while ($g = $grafico->fetch_assoc()) {
 
     <h2 class="mb-4">Histórico de Vendas - <?= date("d/m/Y", strtotime($data)) ?></h2>
     <p><strong>Usuário logado:</strong> <?= htmlspecialchars($usuario_logado) ?> | <strong>Total do Dia:</strong> FCFA <?= number_format($total_dia, 2, ',', '.') ?></p>
+
+    <?php if ($mais_vendido): ?>
+        <p><strong>Medicamento mais vendido no mês:</strong> <?= htmlspecialchars($mais_vendido['nome']) ?> (<?= $mais_vendido['total_qtd'] ?> unidades)</p>
+    <?php else: ?>
+        <p><strong>Medicamento mais vendido no mês:</strong> Nenhum registro.</p>
+    <?php endif; ?>
 
     <table class="table table-striped table-bordered">
         <thead>
@@ -177,42 +206,63 @@ while ($g = $grafico->fetch_assoc()) {
     <h4 class="mt-5">Gráficos</h4>
     <div class="chart-container">
         <div class="chart-box">
-            <canvas id="grafico1"></canvas>
+            <canvas id="graficoDias"></canvas>
         </div>
         <div class="chart-box">
-            <canvas id="grafico2"></canvas>
+            <canvas id="graficoMedicamentos"></canvas>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const labels = <?= json_encode($labels) ?>;
-    const valores = <?= json_encode($valores) ?>;
+    // Dados do gráfico de vendas por dia (gráfico circular)
+    const labelsDias = <?= json_encode($labels_dias) ?>;
+    const valoresDias = <?= json_encode($valores_dias) ?>;
 
-    new Chart(document.getElementById('grafico1'), {
-        type: 'bar',
+    new Chart(document.getElementById('graficoDias'), {
+        type: 'pie',
         data: {
-            labels: labels,
+            labels: labelsDias,
             datasets: [{
                 label: 'Vendas por Dia (FCFA)',
-                data: valores,
-                backgroundColor: '#0d6efd'
+                data: valoresDias,
+                backgroundColor: labelsDias.map(() => '#' + Math.floor(Math.random()*16777215).toString(16)),
+                borderWidth: 1
             }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
         }
     });
 
-    new Chart(document.getElementById('grafico2'), {
-        type: 'line',
+    // Dados do gráfico de vendas por medicamento (gráfico circular)
+    const labelsMedicamentos = <?= json_encode($labels_medicamentos) ?>;
+    const valoresMedicamentos = <?= json_encode($valores_medicamentos) ?>;
+
+    new Chart(document.getElementById('graficoMedicamentos'), {
+        type: 'pie',
         data: {
-            labels: labels,
+            labels: labelsMedicamentos,
             datasets: [{
-                label: 'Tendência de Vendas (FCFA)',
-                data: valores,
-                borderColor: 'green',
-                fill: false,
-                tension: 0.3
+                label: 'Vendas por Medicamento (FCFA)',
+                data: valoresMedicamentos,
+                backgroundColor: labelsMedicamentos.map(() => '#' + Math.floor(Math.random()*16777215).toString(16)),
+                borderWidth: 1
             }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
         }
     });
 </script>

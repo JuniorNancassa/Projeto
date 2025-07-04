@@ -1,9 +1,9 @@
 <?php
 session_start();
-if (!isset($_SESSION['usuario_logado']) || $_SESSION['tipo_usuario'] !== 'admin') {
+/*if (!isset($_SESSION['usuario_logado']) || $_SESSION['tipo_usuario'] !== 'admin') {
     echo "<script>alert('Você não tem permissão para acessar esta página.'); window.location.href='dashboard.php';</script>";
     exit;
-}
+}*/
 function conectar_banco() {
     $conn = new mysqli("localhost", "root", "", "farmacia");
     if ($conn->connect_error) {
@@ -66,10 +66,11 @@ $dados = $conn->query("SELECT * FROM medicamentos");
     <meta charset="UTF-8">
     <title>Cadastro de Medicamentos</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f7f7f7; }
+        body { font-family: 'Segoe UI', sans-serif;
+             margin: 0; background: #f7f7f7; }
 
         nav {
-            background-color: #34495e;
+            background-color: #0d6efd;
             color: white;
             padding: 12px 20px;
             display: flex;
@@ -95,7 +96,7 @@ $dados = $conn->query("SELECT * FROM medicamentos");
         }
 
         nav ul li a:hover {
-            color: #4CAF50;
+            color:rgb(13, 14, 13);
         }
 
         .container {
@@ -150,7 +151,7 @@ $dados = $conn->query("SELECT * FROM medicamentos");
             border: 1px solid #ddd;
         }
 
-        th { background-color: #f2f2f2; }
+        th { background-color: #0d6efd; }
 
         .btn {
             padding: 5px 10px;
@@ -168,7 +169,7 @@ $dados = $conn->query("SELECT * FROM medicamentos");
 
         footer {
             margin-top: 60px;
-            background-color: #34495e;
+            background-color: #0d6efd;
             color: white;
             text-align: center;
             padding: 20px;
@@ -184,18 +185,16 @@ $dados = $conn->query("SELECT * FROM medicamentos");
 <body>
 
 <nav>
-    <div class="logo">Farmácia</div>
     <ul>
-        <li><a href="dashboard.php">Início</a></li>
-        <li><a href="cadastro_usuarios.php">Usuários</a></li>
-        <li><a href="cadastro_medicamento.php">Medicamentos</a></li>
-        <li><a href="venda.php">Vendas</a></li>
-        <li><a href="historico.php">Histórico</a></li>
-        <li><a href="estoque.php">Estoque</a></li>
-        <li><a href="logout.php">Sair</a></li>
+      <li><a href="dashboard.php">🏠 Início</a></li>
+      <li><a href="cadastro_usuarios.php">👤 Usuários</a></li>
+      <li><a href="cadastro_medicamento.php">💊 Medicamentos</a></li>
+      <li><a href="venda.php">🛒 Venda</a></li>
+      <li><a href="historico.php">📈 Histórico</a></li>
+      <li><a href="estoque.php">📦 Estoque</a></li>
+      <li><a href="logout.php">🚪 Sair</a></li>
     </ul>
-</nav>
-
+  </nav>
 <div class="container">
     <h2><?php echo $editar ? "Editar Medicamento" : "Cadastrar Medicamento"; ?></h2>
 

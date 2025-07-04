@@ -64,10 +64,10 @@ $usuarios = $conn->query("SELECT * FROM usuarios");
     <title>Gestão de Usuários</title>
     <style>
         body { font-family: Arial; margin: 0; background: #f2f2f2; }
-        nav { background: #34495e; color: white; padding: 12px 20px; display: flex; justify-content: space-between; }
+        nav { background: #0d6efd; color: white; padding: 12px 20px; display: flex; justify-content: space-between; }
         nav ul { display: flex; list-style: none; gap: 20px; }
         nav ul li a { color: white; text-decoration: none; font-weight: bold; }
-        nav ul li a:hover { color: #4CAF50; }
+        nav ul li a:hover { color:rgb(10, 10, 10); }
 
         .container { max-width: 900px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
         h2 { text-align: center; }
@@ -94,10 +94,10 @@ $usuarios = $conn->query("SELECT * FROM usuarios");
 
         table { width: 100%; margin-top: 30px; border-collapse: collapse; }
         th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
-        th { background-color: #f8f8f8; }
+        th { background-color: #0d6efd; }
         .msg { text-align: center; font-weight: bold; margin: 10px 0; color: green; }
 
-        .btn {
+     .btn {
     padding: 6px 10px;
     font-size: 16px;
     border: none;
@@ -127,8 +127,8 @@ $usuarios = $conn->query("SELECT * FROM usuarios");
 }
 
 
-        footer {
-    background-color: #34495e;
+    footer {
+    background-color: #0d6efd;
     color: white;
     text-align: center;
     padding: 15px 0;
@@ -143,17 +143,16 @@ $usuarios = $conn->query("SELECT * FROM usuarios");
 </head>
 <body>
 <nav>
-    <div><strong>Farmácia</strong></div>
     <ul>
-        <li><a href="dashboard.php">Início</a></li>
-        <li><a href="cadastro_usuarios.php">Cadastrar Usuário</a></li>
-        <li><a href="cadastro_medicamento.php">Cadastrar Medicamento</a></li>
-        <li><a href="venda.php">Vendas</a></li>
-        <li><a href="historico.php">Histórico</a></li>
-        <li><a href="estoque.php">Estoque</a></li>
-        <li><a href="logout.php">Sair</a></li>
+      <li><a href="dashboard.php">🏠 Início</a></li>
+      <li><a href="cadastro_usuarios.php">👤 Usuários</a></li>
+      <li><a href="cadastro_medicamento.php">💊 Medicamentos</a></li>
+      <li><a href="venda.php">🛒 Venda</a></li>
+      <li><a href="historico.php">📈 Histórico</a></li>
+      <li><a href="estoque.php">📦 Estoque</a></li>
+      <li><a href="logout.php">🚪 Sair</a></li>
     </ul>
-</nav>
+  </nav>
 
 <div class="container">
     <h2><?php echo $usuario_editar ? "Editar Usuário" : "Cadastrar Usuário"; ?></h2>

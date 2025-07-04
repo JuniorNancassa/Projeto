@@ -1,7 +1,7 @@
+
 <?php
 session_start();
 
-// Verifica se o usuário está logado
 if (!isset($_SESSION['id_usuario']) || !isset($_SESSION['nome_usuario'])) {
     echo "<script>alert('Você precisa estar logado para realizar vendas.'); window.location.href='login.php';</script>";
     exit;
@@ -9,7 +9,6 @@ if (!isset($_SESSION['id_usuario']) || !isset($_SESSION['nome_usuario'])) {
 
 echo "<p>Usuário logado: " . htmlspecialchars($_SESSION['nome_usuario']) . "</p>";
 
-// Configurações do banco
 define('DB_SERVER', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
@@ -35,7 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vender'])) {
     }
 
     $conn = conectar_banco();
-
     $stmt = $conn->prepare("SELECT quantidade FROM medicamentos WHERE id = ?");
     $stmt->bind_param('i', $id_medicamento);
     $stmt->execute();
@@ -53,7 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vender'])) {
             echo "<script>alert('Quantidade desejada excede o estoque disponível');</script>";
         } else {
             $novo_estoque = $estoque_atual - $quantidade_venda;
-
             $up = $conn->prepare("UPDATE medicamentos SET quantidade = ? WHERE id = ?");
             $up->bind_param('ii', $novo_estoque, $id_medicamento);
             $up->execute();
@@ -84,51 +81,146 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vender'])) {
   <title>Venda de Medicamentos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background-color: #f5f5f5; color: #333; }
-    header { background-color: #1976d2; color: white; padding: 1rem; text-align: center; font-size: 1.5rem; }
-    nav { background-color: #1565c0; padding: 0.5rem; }
-    nav ul { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; }
-    nav ul li { margin: 0.5rem; }
-    nav ul li a { color: white; text-decoration: none; padding: 0.5rem 1rem; background-color: #0d47a1; border-radius: 5px; transition: background-color 0.3s; }
-    nav ul li a:hover { background-color: #82b1ff; color: black; }
-    main { padding: 2rem; }
-    .container { display: flex; flex-direction: column; gap: 2rem; }
-    .form-section, .table-section { background-color: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    form { display: flex; flex-direction: column; gap: 1rem; }
-    form label { font-weight: bold; }
-    form select, form input, form button { padding: 0.8rem; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; }
-    form button { background-color: #1976d2; color: white; border: none; cursor: pointer; transition: background-color 0.3s; }
-    form button:hover { background-color: #1565c0; }
-    .search-container { margin-bottom: 1rem; }
-    .search-container input { width: 100%; padding: 0.7rem;	border-radius: 5px; border: 1px solid #ccc; font-size: 1rem; }
-    table { width: 100%;	border-collapse: collapse; }
-    table th, table td { padding: 1rem; text-align: left; border-bottom: 1px solid #ddd; }
-    table th { background-color: #eeeeee; }
-    @media (min-width: 768px) {
-      .container { flex-direction: row; justify-content: space-between; }
-      .form-section, .table-section { width: 48%; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f1f4f9;
+    color: #333;
+  }
+  header {
+    background: #0d6efd;
+    color: white;
+    padding: 1.5rem;
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  nav {
+    background: #0d6efd;
+  }
+  nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    list-style: none;
+    padding: 1rem;
+  }
+  nav ul li {
+    margin: 0 0.5rem;
+  }
+  nav ul li a {
+    color: white;
+    text-decoration: none;
+    padding: 0.7rem 1.2rem;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    
+  }
+  nav ul li a:hover {
+    color: black;
+  }
+  main {
+    padding: 2rem;
+  }
+  .container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  .form-section, .table-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  form label { font-weight: 600; }
+  form select, form input, form button {
+    padding: 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: 0.2s ease;
+  }
+  form input:focus, form select:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 5px rgba(52,152,219,0.3);
+  }
+  form button {
+    background: #3498db;
+    color: white;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+  }
+  form button:hover {
+    background: #2980b9;
+  }
+  .search-container {
+    margin-bottom: 1.5rem;
+  }
+  .search-container input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+  table th, table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+  table th {
+    background-color: #0d6efd;
+    font-weight: 600;
+  }
+  @media (min-width: 768px) {
+    .container {
+      flex-direction: row;
+      justify-content: space-between;
     }
+    .form-section, .table-section {
+      width: 48%;
+    }
+  }
+  @media (max-width: 767px) {
+    table {
+      display: block;
+      overflow-x: auto;
+    }
+  }
   </style>
 </head>
 <body>
   <header>Venda de Medicamentos</header>
   <nav>
     <ul>
-      <li><a href="dashboard.php">Início</a></li>
-      <li><a href="cadastro_usuarios.php">Cadastrar Usuário</a></li>
-      <li><a href="cadastro_medicamento.php">Cadastrar Medicamento</a></li>
-      <li><a href="venda.php">Venda</a></li>
-      <li><a href="historico.php">Histórico</a></li>
-      <li><a href="estoque.php">Estoque</a></li>
-      <li><a href="logout.php">Sair</a></li>
+      <li><a href="dashboard.php">🏠 Início</a></li>
+      <li><a href="cadastro_usuarios.php">👤 Usuários</a></li>
+      <li><a href="cadastro_medicamento.php">💊 Medicamentos</a></li>
+      <li><a href="venda.php">🛒 Venda</a></li>
+      <li><a href="historico.php">📈 Histórico</a></li>
+      <li><a href="estoque.php">📦 Estoque</a></li>
+      <li><a href="logout.php">🚪 Sair</a></li>
     </ul>
   </nav>
   <main>
     <div class="container">
       <div class="form-section">
         <form action="venda.php" method="post">
-          <label for="id_medicamento">Seleccione o Medicamento:</label>
+          <label for="id_medicamento">Selecione o Medicamento:</label>
           <select name="id_medicamento" id="id_medicamento" required onchange="updatePreco()">
             <option value="">Escolha um medicamento</option>
             <?php
