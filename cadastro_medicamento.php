@@ -22,9 +22,11 @@ if (isset($_POST['cadastrar'])) {
     $quantidade = (int) $_POST['quantidade'];
     $preco = (float) $_POST['preco'];
     $validade = $conn->real_escape_string($_POST['validade']);
+    $categoria = $conn->real_escape_string($_POST['categoria']);
+    $fornecedor = $conn->real_escape_string($_POST['fornecedor']);
 
-    $sql = "INSERT INTO medicamentos (nome, descricao, quantidade, preco, validade)
-            VALUES ('$nome', '$descricao', '$quantidade', '$preco', '$validade')";
+    $sql = "INSERT INTO medicamentos (nome, descricao, quantidade, preco, validade, categoria, fornecedor)
+            VALUES ('$nome', '$descricao', '$quantidade', '$preco', '$validade', '$categoria', '$fornecedor')";
     $mensagem = $conn->query($sql) ? "Medicamento cadastrado!" : "Erro: " . $conn->error;
 }
 
@@ -36,9 +38,11 @@ if (isset($_POST['atualizar'])) {
     $quantidade = (int) $_POST['quantidade'];
     $preco = (float) $_POST['preco'];
     $validade = $conn->real_escape_string($_POST['validade']);
+    $categoria = $conn->real_escape_string($_POST['categoria']);
+    $fornecedor = $conn->real_escape_string($_POST['fornecedor']);
 
     $sql = "UPDATE medicamentos SET nome='$nome', descricao='$descricao', quantidade='$quantidade',
-            preco='$preco', validade='$validade' WHERE id=$id";
+            preco='$preco', validade='$validade', categoria='$categoria', fornecedor='$fornecedor' WHERE id=$id";
     $mensagem = $conn->query($sql) ? "Atualizado com sucesso!" : "Erro: " . $conn->error;
 }
 
@@ -111,7 +115,7 @@ $dados = $conn->query("SELECT * FROM medicamentos");
         h2 { text-align: center; }
 
         form label { font-weight: bold; display: block; margin-top: 15px; }
-        form input, form textarea {
+        form input, form textarea, form select {
             width: 100%;
             padding: 8px;
             border: 1px solid #ccc;
@@ -151,7 +155,7 @@ $dados = $conn->query("SELECT * FROM medicamentos");
             border: 1px solid #ddd;
         }
 
-        th { background-color: #0d6efd; }
+        th { background-color: #0d6efd; color: white; }
 
         .btn {
             padding: 5px 10px;
@@ -166,6 +170,18 @@ $dados = $conn->query("SELECT * FROM medicamentos");
 
         .btn.excluir { background-color: #e74c3c; color: white; }
         .btn.excluir:hover { background-color: #c0392b; }
+
+        .vencido {
+            background-color: #ffcccc;
+            color: #b30000;
+            font-weight: bold;
+        }
+
+        .proximo {
+            background-color: #fff3cd;
+            color: #856404;
+            font-weight: bold;
+        }
 
         footer {
             margin-top: 60px;
@@ -213,6 +229,19 @@ $dados = $conn->query("SELECT * FROM medicamentos");
         <label>Descrição:</label>
         <textarea name="descricao" required><?php echo $editar['descricao'] ?? ''; ?></textarea>
 
+        <label>Categoria:</label>
+        <select name="categoria" required>
+            <option value="">Selecione</option>
+            <option value="Analgésico" <?php if (($editar['categoria'] ?? '') == 'Analgésico') echo 'selected'; ?>>Analgésico</option>
+            <option value="Antibiótico" <?php if (($editar['categoria'] ?? '') == 'Antibiótico') echo 'selected'; ?>>Antibiótico</option>
+            <option value="Anti-inflamatório" <?php if (($editar['categoria'] ?? '') == 'Anti-inflamatório') echo 'selected'; ?>>Anti-inflamatório</option>
+            <option value="Antialérgico" <?php if (($editar['categoria'] ?? '') == 'Antialérgico') echo 'selected'; ?>>Antialérgico</option>
+            <option value="Outro" <?php if (($editar['categoria'] ?? '') == 'Outro') echo 'selected'; ?>>Outro</option>
+        </select>
+
+        <label>Fornecedor:</label>
+        <input type="text" name="fornecedor" value="<?php echo $editar['fornecedor'] ?? ''; ?>" required>
+
         <label>Quantidade:</label>
         <input type="number" name="quantidade" value="<?php echo $editar['quantidade'] ?? ''; ?>" required>
 
@@ -231,17 +260,38 @@ $dados = $conn->query("SELECT * FROM medicamentos");
     <table>
         <thead>
             <tr>
-                <th>Nome</th><th>Descrição</th><th>Quantidade</th><th>Preço</th><th>Validade</th><th>Ações</th>
+                <th>Nome</th><th>Descrição</th><th>Categoria</th><th>Fornecedor</th><th>Quantidade</th><th>Preço</th><th>Validade</th><th>Ações</th>
             </tr>
         </thead>
         <tbody>
         <?php while ($m = $dados->fetch_assoc()): ?>
+            <?php
+                $hoje = date('Y-m-d');
+                $validade = $m['validade'];
+                $classe_alerta = "";
+                $mensagem_alerta = "";
+
+                if ($validade < $hoje) {
+                    $classe_alerta = "vencido";
+                    $mensagem_alerta = "Medicamento vencido!";
+                } elseif ((strtotime($validade) - strtotime($hoje)) <= 2592000) {
+                    $classe_alerta = "proximo";
+                    $mensagem_alerta = "Vence em menos de 30 dias!";
+                }
+            ?>
             <tr>
                 <td><?php echo $m['nome']; ?></td>
                 <td><?php echo $m['descricao']; ?></td>
+                <td><?php echo $m['categoria']; ?></td>
+                <td><?php echo $m['fornecedor']; ?></td>
                 <td><?php echo $m['quantidade']; ?></td>
                 <td><?php echo number_format($m['preco'], 2, ',', '.'); ?></td>
-                <td><?php echo date('d/m/Y', strtotime($m['validade'])); ?></td>
+                <td class="<?php echo $classe_alerta; ?>">
+                    <?php echo date('d/m/Y', strtotime($validade)); ?>
+                    <?php if ($mensagem_alerta): ?>
+                        <br><small><?php echo $mensagem_alerta; ?></small>
+                    <?php endif; ?>
+                </td>
                 <td>
                     <a href="?editar=<?php echo $m['id']; ?>" class="btn editar">✏️</a>
                     <form method="post" style="display:inline">
