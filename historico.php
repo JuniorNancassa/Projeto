@@ -268,3 +268,4 @@ $mais_vendido = $conn->query("SELECT m.nome, SUM(v.quantidade) AS total_qtd
 </script>
 </body>
 </html>
+
