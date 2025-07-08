@@ -6,7 +6,6 @@ if (!isset($_SESSION['usuario_logado']) || $_SESSION['tipo_usuario'] !== 'admin'
     exit;
 }
 
-
 function conectar_banco() {
     $conn = new mysqli("localhost", "root", "", "farmacia");
     if ($conn->connect_error) {
@@ -22,11 +21,17 @@ $mensagem = "";
 if (isset($_POST['cadastrar'])) {
     $nome = $conn->real_escape_string($_POST['nome']);
     $email = $conn->real_escape_string($_POST['email']);
-    $senha = password_hash($_POST['senha'], PASSWORD_DEFAULT);
+    $senha = $_POST['senha'];
+    $confirmar = $_POST['confirmar_senha'];
     $tipo = $_POST['tipo_usuario'];
 
-    $sql = "INSERT INTO usuarios (nome, email, senha, tipo_usuario) VALUES ('$nome', '$email', '$senha', '$tipo')";
-    $mensagem = $conn->query($sql) ? "Usuário cadastrado!" : "Erro: " . $conn->error;
+    if ($senha !== $confirmar) {
+        $mensagem = "As senhas não coincidem!";
+    } else {
+        $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
+        $sql = "INSERT INTO usuarios (nome, email, senha, tipo_usuario) VALUES ('$nome', '$email', '$senha_hash', '$tipo')";
+        $mensagem = $conn->query($sql) ? "Usuário cadastrado!" : "Erro: " . $conn->error;
+    }
 }
 
 // Atualizar usuário
@@ -165,7 +170,7 @@ $usuarios = $conn->query("SELECT * FROM usuarios");
         <?php if ($usuario_editar): ?>
             <input type="hidden" name="id" value="<?php echo $usuario_editar['id']; ?>">
         <?php endif; ?>
-        <label>Nome:</label>
+        <label>Nome Completo:</label>
         <input type="text" name="nome" required value="<?php echo $usuario_editar['nome'] ?? ''; ?>">
 
         <label>E-mail:</label>
@@ -174,6 +179,9 @@ $usuarios = $conn->query("SELECT * FROM usuarios");
         <?php if (!$usuario_editar): ?>
         <label>Senha:</label>
         <input type="password" name="senha" required>
+
+        <label>Confirmar Senha:</label>
+        <input type="password" name="confirmar_senha" required>
         <?php endif; ?>
 
         <label>Tipo:</label>
