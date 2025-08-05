@@ -93,12 +93,47 @@ $mais_vendido = $conn->query("SELECT m.nome, SUM(v.quantidade) AS total_qtd
         }
         .container {
             background-color: #fff;
-            padding: 30px;
+            padding: 30px ;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin: 30px auto;
         }
-        .navbar {
-            margin-bottom: 30px;
+        header {
+        background-color: #0d6efd;
+        color: white;
+        text-align: center;
+        padding: 20px;
+        font-size: 1.8rem;
+         font-weight: bold;
+        }
+        nav {
+            background-color: #0d6efd;
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav .logo {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 20px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        nav ul li a:hover {
+            color:rgb(13, 14, 13);
         }
         .table th {
             background-color: #0d6efd;
@@ -122,27 +157,30 @@ $mais_vendido = $conn->query("SELECT m.nome, SUM(v.quantidade) AS total_qtd
             min-width: 300px;
             max-width: 500px;
         }
+
+        footer {
+            margin-top: 60px;
+            background-color: #0d6efd;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="#">Gestão Farmacêutica</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="dashboard.php">Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="cadastro_medicamento.php">Medicamentos</a></li>
-                <li class="nav-item"><a class="nav-link active" href="historico.php">Histórico</a></li>
-                <li class="nav-item"><a class="nav-link" href="estoque.php">Estoque</a></li>
-                <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
-
+    <header>Histórico Das Dos Medicamentos</header>
+<nav>
+    <ul>
+      <li><a href="dashboard.php">🏠 Início</a></li>
+      <li><a href="cadastro_usuarios.php">👤 Usuários</a></li>
+      <li><a href="cadastro_medicamento.php">💊 Medicamentos</a></li>
+      <li><a href="venda.php">🛒 Venda</a></li>
+      <li><a href="historico.php">📈 Histórico</a></li>
+      <li><a href="estoque.php">📦 Estoque</a></li>
+      <li><a href="pagina_inicial.php">🚪 Sair</a></li>
+    </ul>
+  </nav>
 <div class="container">
     <div class="mb-4 d-flex justify-content-between align-items-center">
         <form method="get" class="d-flex align-items-center gap-2">
@@ -267,5 +305,8 @@ $mais_vendido = $conn->query("SELECT m.nome, SUM(v.quantidade) AS total_qtd
     });
 </script>
 </body>
+<footer>
+    &copy; 2025 Sistema de Gestão Farmacêutica
+  </footer>
 </html>
 

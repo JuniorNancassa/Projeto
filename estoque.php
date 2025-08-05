@@ -29,28 +29,43 @@ $result = mysqli_query($conn, $sql);
       background-color: #f2f2f2;
       margin: 0;
     }
-    header, footer {
+    header{
       background-color: #0d6efd;
       color: white;
       text-align: center;
       padding: 20px;
-    }
-    nav {
-      background-color: #0d6efd;
-      padding: 10px;
-    }
-    nav ul {
-      list-style: none;
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      padding: 0;
-    }
-    nav ul li a {
-      color: white;
-      text-decoration: none;
+      font-size: 1.8rem;
       font-weight: bold;
     }
+    nav {
+            background-color: #0d6efd;
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav .logo {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 20px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        nav ul li a:hover {
+            color:rgb(13, 14, 13);
+        }
     main {
       max-width: 1000px;
       margin: 30px auto;
@@ -93,12 +108,20 @@ $result = mysqli_query($conn, $sql);
       border: 1px solid #ccc;
       border-radius: 4px;
     }
+
+    footer {
+            margin-top: 60px;
+            background-color: #0d6efd;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+        }
   </style>
 </head>
 <body>
   <header>📦 Estoque de Medicamentos</header>
-
-  <nav>
+<nav>
     <ul>
       <li><a href="dashboard.php">🏠 Início</a></li>
       <li><a href="cadastro_usuarios.php">👤 Usuários</a></li>
@@ -106,7 +129,7 @@ $result = mysqli_query($conn, $sql);
       <li><a href="venda.php">🛒 Venda</a></li>
       <li><a href="historico.php">📈 Histórico</a></li>
       <li><a href="estoque.php">📦 Estoque</a></li>
-      <li><a href="logout.php">🚪 Sair</a></li>
+      <li><a href="pagina_inicial.php">🚪 Sair</a></li>
     </ul>
   </nav>
 
@@ -161,10 +184,6 @@ $result = mysqli_query($conn, $sql);
     </table>
   </main>
 
-  <footer>
-    &copy; 2025 Sistema de Gestão Farmacêutica
-  </footer>
-
   <script>
   function filtrarMedicamentos() {
     const input = document.getElementById("searchInput").value.toUpperCase();
@@ -192,4 +211,7 @@ $result = mysqli_query($conn, $sql);
 </script>
 
 </body>
+<footer>
+    &copy; 2025 Sistema de Gestão Farmacêutica 
+  </footer>
 </html>

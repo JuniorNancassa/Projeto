@@ -7,7 +7,7 @@ if (!isset($_SESSION['id_usuario']) || !isset($_SESSION['nome_usuario'])) {
     exit;
 }
 
-echo "<p>Usuário logado: " . htmlspecialchars($_SESSION['nome_usuario']) . "</p>";
+//echo "<p>Usuário logado: " . htmlspecialchars($_SESSION['nome_usuario']) . "</p>";
 
 define('DB_SERVER', 'localhost');
 define('DB_USER', 'root');
@@ -96,30 +96,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vender'])) {
     font-weight: bold;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   }
-  nav {
-    background: #0d6efd;
-  }
-  nav ul {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    list-style: none;
-    padding: 1rem;
-  }
-  nav ul li {
-    margin: 0 0.5rem;
-  }
-  nav ul li a {
-    color: white;
-    text-decoration: none;
-    padding: 0.7rem 1.2rem;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-    
-  }
-  nav ul li a:hover {
-    color: black;
-  }
+   nav {
+            background-color: #0d6efd;
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav .logo {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 20px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        nav ul li a:hover {
+            color:rgb(13, 14, 13);
+        }
   main {
     padding: 2rem;
   }
@@ -186,6 +191,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vender'])) {
     background-color: #0d6efd;
     font-weight: 600;
   }
+
+  footer {
+            margin-top: 60px;
+            background-color: #0d6efd;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+        }
   @media (min-width: 768px) {
     .container {
       flex-direction: row;
@@ -205,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vender'])) {
 </head>
 <body>
   <header>Venda de Medicamentos</header>
-  <nav>
+ <nav>
     <ul>
       <li><a href="dashboard.php">🏠 Início</a></li>
       <li><a href="cadastro_usuarios.php">👤 Usuários</a></li>
@@ -213,9 +227,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vender'])) {
       <li><a href="venda.php">🛒 Venda</a></li>
       <li><a href="historico.php">📈 Histórico</a></li>
       <li><a href="estoque.php">📦 Estoque</a></li>
-      <li><a href="logout.php">🚪 Sair</a></li>
+      <li><a href="pagina_inicial.php">🚪 Sair</a></li>
     </ul>
   </nav>
+
   <main>
     <div class="container">
       <div class="form-section">
@@ -288,4 +303,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vender'])) {
     document.addEventListener('DOMContentLoaded', updatePreco);
   </script>
 </body>
+ <footer>
+    &copy; 2025 Sistema de Gestão Farmacêutica
+  </footer>
 </html>

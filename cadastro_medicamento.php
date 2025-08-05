@@ -208,7 +208,7 @@ $dados = $conn->query("SELECT * FROM medicamentos");
       <li><a href="venda.php">🛒 Venda</a></li>
       <li><a href="historico.php">📈 Histórico</a></li>
       <li><a href="estoque.php">📦 Estoque</a></li>
-      <li><a href="logout.php">🚪 Sair</a></li>
+      <li><a href="pagina_inicial.php">🚪 Sair</a></li>
     </ul>
   </nav>
 <div class="container">
