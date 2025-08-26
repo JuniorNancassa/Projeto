@@ -17,19 +17,27 @@ $nome_usuario = $_SESSION['nome_usuario'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    <style>
-        /* Resetando estilos padrões */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
 
-        /* Corpo com fundo */
-        body {
-            background: url('dashboard-bg.jpg') no-repeat center center/cover;
-            background-size: cover;
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
         }
 
-        /* Overlay para melhor legibilidade */
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            background: url('dashboard-bg.jpg') no-repeat center center/cover;
+        }
+
         .overlay {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
@@ -38,25 +46,32 @@ $nome_usuario = $_SESSION['nome_usuario'];
             z-index: -1;
         }
 
-        /* Navbar */
         .navbar {
             background: rgba(255, 255, 255, 0.9);
-            padding: 15px;
+            padding: 10px 20px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: flex-start;
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
             border-radius: 10px;
             margin: 10px;
+            position: relative;
+        }
+
+        .navbar .menu-toggle {
+            display: none;
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 10px;
         }
 
         .navbar ul {
             list-style: none;
             display: flex;
+            flex-wrap: wrap;
             gap: 20px;
-        }
-
-        .navbar ul li {
-            display: inline;
         }
 
         .navbar ul li a {
@@ -72,7 +87,22 @@ $nome_usuario = $_SESSION['nome_usuario'];
             color: gray;
         }
 
-        /* Estilo do container principal */
+        @media (max-width: 768px) {
+            .navbar ul {
+                flex-direction: column;
+                width: 100%;
+                display: none;
+            }
+
+            .navbar ul.show {
+                display: flex;
+            }
+
+            .navbar .menu-toggle {
+                display: block;
+            }
+        }
+
         .container {
             text-align: center;
             padding: 50px 20px;
@@ -80,9 +110,10 @@ $nome_usuario = $_SESSION['nome_usuario'];
             border-radius: 12px;
             width: 90%;
             max-width: 600px;
-            margin: 100px auto;
+            margin: 40px auto;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             animation: fadeIn 1s ease-out;
+            z-index: 1;
         }
 
         h1 {
@@ -96,36 +127,36 @@ $nome_usuario = $_SESSION['nome_usuario'];
             color: #666;
         }
 
-        /* Footer estilizado */
         .footer {
-            background-color: rgba(255, 255, 255, 0.9);
-            color: black;
+            margin-top: auto;
+            background-color: rgba(255, 255, 255, 0.95);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 20px;
+            font-size: 14px;
+            border-top: 1px solid #ccc;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .footer p {
+            margin: 5px 0;
             text-align: center;
-            padding: 10px 0;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
         }
 
-        /* Responsividade */
-        @media (max-width: 768px) {
-            .navbar {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .navbar ul {
-                flex-direction: column;
-                gap: 10px;
-                margin-top: 10px;
-            }
-
-            .container {
-                padding: 30px 10px;
-            }
+        .footer a {
+            color: #4CAF50;
+            text-decoration: none;
+            margin: 0 5px;
+            font-weight: bold;
         }
 
-        /* Animação */
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
         @keyframes fadeIn {
             0% { opacity: 0; transform: translateY(-20px); }
             100% { opacity: 1; transform: translateY(0); }
@@ -139,7 +170,8 @@ $nome_usuario = $_SESSION['nome_usuario'];
 
 <!-- Navbar -->
 <nav class="navbar">
-    <ul>
+    <button class="menu-toggle" onclick="toggleMenu()">☰ Menu</button>
+    <ul id="menu">
         <li><a href="dashboard.php">🏠Início</a></li>
         <li><a href="cadastro_usuarios.php">👤Cadastrar Usuário</a></li>
         <li><a href="cadastro_medicamento.php">💊Cadastrar Medicamento</a></li>
@@ -158,8 +190,17 @@ $nome_usuario = $_SESSION['nome_usuario'];
 
 <!-- Footer -->
 <footer class="footer">
-    <p>&copy; 2025 Farmácia. Todos os direitos reservados.</p>
+    <p>&copy; <?php echo date('Y'); ?> Farmácia. Todos os direitos reservados.</p>
+    <p>Desenvolvido por <a href="fernandojuniornancassa@gmail.com">Natypanah Fernando Nancassa</a></p>
 </footer>
+
+<!-- Script para toggle do menu -->
+<script>
+function toggleMenu() {
+    const menu = document.getElementById("menu");
+    menu.classList.toggle("show");
+}
+</script>
 
 </body>
 </html>

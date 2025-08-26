@@ -29,6 +29,7 @@
       padding: 20px;
     }
 
+    /* Container principal */
     .container {
       background: rgba(0, 0, 0, 0.3);
       padding: 40px 30px;
@@ -85,20 +86,96 @@
       margin: 0 auto 20px;
     }
 
-    .sobre {
-      background: white;
-      color: #333;
-      border-radius: 10px;
-      padding: 20px;
-      max-width: 500px;
-      width: 100%;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      animation: fadeIn 1.5s ease-in-out;
+    /* Modal Sobre */
+    .modal {
+      display: none; /* oculto por padrão */
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
     }
 
-    .sobre h2 {
+    .modal-content {
+      background: #fff;
+      color: #333;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 500px;
+      width: 90%;
+      animation: fadeIn 0.5s ease-in-out;
+      text-align: left;
+    }
+
+    .modal-content h2 {
       margin-bottom: 10px;
       color: #0d6efd;
+    }
+
+    .close-btn {
+      float: right;
+      font-size: 20px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    /* Menu superior */
+    .navbar {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .navbar a {
+      color: white;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+    }
+
+    .hamburger div {
+      width: 25px;
+      height: 3px;
+      background: white;
+      margin: 4px 0;
+      transition: 0.3s;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 50px;
+        left: 20px;
+        flex-direction: column;
+        background: rgba(0,0,0,0.8);
+        padding: 10px;
+        border-radius: 8px;
+      }
+
+      .nav-links.active {
+        display: flex;
+      }
+
+      .hamburger {
+        display: flex;
+      }
     }
 
     @media (max-width: 600px) {
@@ -111,19 +188,59 @@
 
 <body>
 
+  <!-- Navbar 
+  <div class="navbar">
+    <div class="hamburger" onclick="toggleMenu()">
+      <div></div><div></div><div></div>
+    </div>
+    <div class="nav-links" id="navLinks">
+      <a href="login.php">Entrar</a>
+      <a href="#" onclick="openModal()">Sobre</a>
+    </div>
+  </div>-->
+
   <div class="container">
     <img src="far.png" alt="Ícone de Farmácia" class="illustration" />
     <div class="icon"><i class="fas fa-capsules"></i></div>
     <h1>Bem-vindo ao Sistema de Gestão Farmacêutica</h1>
     <p>Controle, otimize e monitore sua farmácia com segurança e eficiência.</p>
     <a href="login.php" class="btn"><i class="fas fa-sign-in-alt"></i> Entrar</a>
-    <a href="#sobre" class="btn"><i class="fas fa-info-circle"></i> Sobre o sistema</a>
+    <button class="btn" onclick="openModal()"><i class="fas fa-info-circle"></i> Sobre o sistema</button>
   </div>
 
-  <div class="sobre" id="sobre">
-    <h2>Sobre o Sistema</h2>
-    <p>Este sistema foi desenvolvido para auxiliar farmácias na gestão de estoque, vendas, validade de medicamentos, usuários e relatórios em PDF. Ele garante eficiência, controle e segurança no atendimento farmacêutico.</p>
+  <!-- Modal Sobre -->
+  <div class="modal" id="sobreModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal()">&times;</span>
+      <h2>Sobre o Sistema</h2>
+      <p>Este sistema foi desenvolvido para auxiliar farmácias na gestão de estoque, vendas, validade de medicamentos, usuários e relatórios em PDF. Ele garante eficiência, controle e segurança no atendimento farmacêutico.</p>
+    </div>
   </div>
+
+  <script>
+    // Abrir modal
+    function openModal() {
+      document.getElementById("sobreModal").style.display = "flex";
+    }
+
+    // Fechar modal
+    function closeModal() {
+      document.getElementById("sobreModal").style.display = "none";
+    }
+
+    // Fechar modal clicando fora
+    window.onclick = function(event) {
+      const modal = document.getElementById("sobreModal");
+      if (event.target === modal) {
+        modal.style.display = "none";
+      }
+    }
+
+    // Menu hambúrguer
+    function toggleMenu() {
+      document.getElementById("navLinks").classList.toggle("active");
+    }
+  </script>
 
 </body>
 </html>

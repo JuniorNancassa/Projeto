@@ -38,34 +38,64 @@ $result = mysqli_query($conn, $sql);
       font-weight: bold;
     }
     nav {
-            background-color: #0d6efd;
-            color: white;
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+      background-color: #0d6efd;
+      color: white;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+    nav .logo {
+      font-weight: bold;
+      font-size: 18px;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 20px;
+    }
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    nav ul li a:hover {
+      color:rgb(13, 14, 13);
+    }
+    /* menu hamburguer */
+    .menu-toggle {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+    }
+    .menu-toggle div {
+      width: 25px;
+      height: 3px;
+      background: white;
+      margin: 4px;
+      border-radius: 2px;
+    }
+    @media(max-width: 768px) {
+      nav ul {
+        display: none;
+        flex-direction: column;
+        background: #0d6efd;
+        position: absolute;
+        top: 55px;
+        right: 0;
+        width: 200px;
+        border-radius: 8px;
+        padding: 10px;
+      }
+      nav ul.show {
+        display: flex;
+      }
+      .menu-toggle {
+        display: flex;
+      }
+    }
 
-        nav .logo {
-            font-weight: bold;
-            font-size: 18px;
-        }
-
-        nav ul {
-            list-style: none;
-            display: flex;
-            gap: 20px;
-        }
-
-        nav ul li a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        nav ul li a:hover {
-            color:rgb(13, 14, 13);
-        }
     main {
       max-width: 1000px;
       margin: 30px auto;
@@ -73,6 +103,30 @@ $result = mysqli_query($conn, $sql);
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    form.abastecimento {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    form.abastecimento select,
+    form.abastecimento input {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    form.abastecimento button {
+      background-color:#0d6efd;
+      color:white;
+      border:none;
+      padding:10px 20px;
+      border-radius:5px;
+      cursor:pointer;
+    }
+    form.abastecimento button:hover {
+      background-color:#0b5ed7;
     }
     table {
       width: 100%;
@@ -83,6 +137,7 @@ $result = mysqli_query($conn, $sql);
       border: 1px solid #ccc;
       text-align: center;
       padding: 10px;
+      font-size: 14px;
     }
     th {
       background-color: #0d6efd;
@@ -108,20 +163,23 @@ $result = mysqli_query($conn, $sql);
       border: 1px solid #ccc;
       border-radius: 4px;
     }
-
     footer {
-            margin-top: 60px;
-            background-color: #0d6efd;
-            color: white;
-            text-align: center;
-            padding: 20px;
-            font-size: 14px;
-        }
+      margin-top: 60px;
+      background-color: #0d6efd;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
   <header>📦 Estoque de Medicamentos</header>
-<nav>
+  <nav>
+    <div class="logo">Farmácia</div>
+    <div class="menu-toggle" onclick="toggleMenu()">
+      <div></div><div></div><div></div>
+    </div>
     <ul>
       <li><a href="dashboard.php">🏠 Início</a></li>
       <li><a href="cadastro_usuarios.php">👤 Usuários</a></li>
@@ -134,17 +192,31 @@ $result = mysqli_query($conn, $sql);
   </nav>
 
   <main>
+    <!-- Formulário de Abastecimento -->
+    <form class="abastecimento" action="abastecer_estoque.php" method="post">
+      <select name="medicamento_id" required>
+        <option value="">Selecione o medicamento</option>
+        <?php
+        mysqli_data_seek($result, 0);
+        while ($row = mysqli_fetch_assoc($result)) {
+            echo "<option value='{$row['id']}'>{$row['nome']}</option>";
+        }
+        ?>
+      </select>
+      <input type="number" name="quantidade" min="1" placeholder="Quantidade" required>
+      <button type="submit">➕ Abastecer</button>
+    </form>
+
     <div class="search-container">
       <input type="text" id="searchInput" onkeyup="filtrarMedicamentos()" placeholder="Buscar medicamento...">
     </div>
     <div style="text-align: right; margin-bottom: 10px;">
-  <form action="relatorio_estoque.php" method="post" target="_blank">
-    <button type="submit" style="background-color:#0d6efd; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">
-      📄 Gerar Relatório PDF
-    </button>
-  </form>
-</div>
-
+      <form action="relatorio_estoque.php" method="post" target="_blank">
+        <button type="submit" style="background-color:#0d6efd; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">
+          📄 Gerar Relatório PDF
+        </button>
+      </form>
+    </div>
 
     <table id="medicamentosTable">
       <thead>
@@ -157,6 +229,7 @@ $result = mysqli_query($conn, $sql);
       </thead>
       <tbody>
         <?php
+        mysqli_data_seek($result, 0);
         if (mysqli_num_rows($result) > 0) {
             while ($row = mysqli_fetch_assoc($result)) {
                 $qtd = (int)$row['quantidade'];
@@ -185,33 +258,37 @@ $result = mysqli_query($conn, $sql);
   </main>
 
   <script>
-  function filtrarMedicamentos() {
-    const input = document.getElementById("searchInput").value.toUpperCase();
-    const table = document.getElementById("medicamentosTable");
-    const linhas = table.getElementsByTagName("tr");
+    function filtrarMedicamentos() {
+      const input = document.getElementById("searchInput").value.toUpperCase();
+      const table = document.getElementById("medicamentosTable");
+      const linhas = table.getElementsByTagName("tr");
 
-    for (let i = 1; i < linhas.length; i++) {
-      const colId = linhas[i].getElementsByTagName("td")[0];
-      const colNome = linhas[i].getElementsByTagName("td")[1];
-      const colQtd = linhas[i].getElementsByTagName("td")[2];
+      for (let i = 1; i < linhas.length; i++) {
+        const colId = linhas[i].getElementsByTagName("td")[0];
+        const colNome = linhas[i].getElementsByTagName("td")[1];
+        const colQtd = linhas[i].getElementsByTagName("td")[2];
 
-      if (colId && colNome && colQtd) {
-        const id = colId.textContent || colId.innerText;
-        const nome = colNome.textContent || colNome.innerText;
-        const qtd = colQtd.textContent || colQtd.innerText;
+        if (colId && colNome && colQtd) {
+          const id = colId.textContent || colId.innerText;
+          const nome = colNome.textContent || colNome.innerText;
+          const qtd = colQtd.textContent || colQtd.innerText;
 
-        const corresponde = id.toUpperCase().includes(input) ||
-                            nome.toUpperCase().includes(input) ||
-                            qtd.toUpperCase().includes(input);
+          const corresponde = id.toUpperCase().includes(input) ||
+                              nome.toUpperCase().includes(input) ||
+                              qtd.toUpperCase().includes(input);
 
-        linhas[i].style.display = corresponde ? "" : "none";
+          linhas[i].style.display = corresponde ? "" : "none";
+        }
       }
     }
-  }
-</script>
 
-</body>
-<footer>
+    function toggleMenu() {
+      document.querySelector("nav ul").classList.toggle("show");
+    }
+  </script>
+
+  <footer>
     &copy; 2025 Sistema de Gestão Farmacêutica 
   </footer>
+</body>
 </html>
