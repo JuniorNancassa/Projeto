@@ -84,6 +84,7 @@
     .illustration {
       width: 100px;
       margin: 0 auto 20px;
+      border-radius: 5px;
     }
 
     /* Modal Sobre */
@@ -200,7 +201,7 @@
   </div>-->
 
   <div class="container">
-    <img src="far.png" alt="Ícone de Farmácia" class="illustration" />
+    <img src="novo_cruz.png" alt="Ícone de Farmácia" class="illustration" />
     <div class="icon"><i class="fas fa-capsules"></i></div>
     <h1>Bem-vindo ao Sistema de Gestão Farmacêutica</h1>
     <p>Controle, otimize e monitore sua farmácia com segurança e eficiência.</p>
