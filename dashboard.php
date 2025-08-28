@@ -1,6 +1,5 @@
 <?php
 session_start();
-// Simulação de usuário logado
 if(!isset($_SESSION['nome_usuario'])) $_SESSION['nome_usuario']="Natypanah Fernando";
 ?>
 <!DOCTYPE html>
@@ -20,32 +19,36 @@ body { margin:0; font-family: Arial, sans-serif; background:#ecf0f1; transition:
      position:fixed;
      height:100%; 
      padding-top:20px;
-     transition: width 0.3s; 
+     transition: width 0.3s, left 0.3s; 
      overflow:hidden; 
-  }
-.sidebar.collapsed { width:60px; }
+     left:0;
+}
+.sidebar.collapsed { 
+    width:0; 
+    left:-220px; 
+}
 .sidebar a { 
     color:white;
-     display:block;
-      padding:12px 20px;
-      text-decoration:none; 
-      white-space:nowrap; 
-      overflow:hidden; 
-      text-overflow:ellipsis;
-       transition:0.3s; }
-.sidebar a:hover{ 
-    background:#34495e;
- }
+    display:block;
+    padding:12px 20px;
+    text-decoration:none; 
+    white-space:nowrap; 
+    overflow:hidden; 
+    text-overflow:ellipsis;
+    transition:0.3s; 
+}
+.sidebar a:hover{ background:#34495e; }
+
 .main{
      margin-left:220px; 
      padding:20px; 
-     transition: 
-     margin-left 0.3s; }
-.main.collapsed{ margin-left:60px; }
+     transition: margin-left 0.3s; 
+}
+.main.collapsed{ margin-left:0; }
 
-/* --- Hamburger animado ajustado --- */
+/* --- Hamburger --- */
 #hamburger{
-  position: fixed; top: 3px; left: 25px; /* Ajuste do topo */
+  position: fixed; top: 5px; left: 25px;
   width: 35px; height: 25px; 
   cursor: pointer; 
   z-index: 10001; 
@@ -53,7 +56,7 @@ body { margin:0; font-family: Arial, sans-serif; background:#ecf0f1; transition:
 }
 #hamburger .bar{
   height: 4px; width: 100%; 
-  background: #ffffff; /* Barras brancas visíveis */
+  background: #ffffff; 
   border-radius: 2px; 
   transition: 0.3s;
 }
@@ -100,8 +103,8 @@ body { margin:0; font-family: Arial, sans-serif; background:#ecf0f1; transition:
 
 /* Responsivo */
 @media(max-width:480px){
-  .sidebar{ width:60px; }
-  .main{ margin-left:60px; padding:10px; }
+  .sidebar{ width:0; left:-220px; }
+  .main{ margin-left:0; padding:10px; }
   #chatbot-container{ width:260px; right:10px; }
 }
 </style>
@@ -125,7 +128,6 @@ body { margin:0; font-family: Arial, sans-serif; background:#ecf0f1; transition:
 </div>
 
 <div class="main" id="main">
-  <!-- Card de boas-vindas -->
   <?php if(isset($_SESSION['nome_usuario'])): ?>
     <div id="welcome-card">
       <div class="icon">👋</div>
@@ -158,27 +160,23 @@ body { margin:0; font-family: Arial, sans-serif; background:#ecf0f1; transition:
 <audio id="notification-sound" src="https://www.myinstants.com/media/sounds/notification.mp3" preload="auto"></audio>
 
 <script>
-// Hamburger e toggle sidebar
+// Hamburger toggle total sidebar
 const hamburger = document.getElementById("hamburger");
 const sidebar = document.getElementById("sidebar");
 const main = document.getElementById("main");
 
 hamburger.addEventListener("click", ()=>{
-  sidebar.classList.toggle("collapsed");
-  main.classList.toggle("collapsed");
+  sidebar.classList.toggle("collapsed"); // esconde completamente
+  main.classList.toggle("collapsed");    // main ocupa 100%
   hamburger.classList.toggle("open");
 });
 
-// Card de boas-vindas
+// Card boas-vindas
 const welcomeCard = document.getElementById("welcome-card");
 const welcomeClose = document.getElementById("welcome-close");
 if(welcomeCard){
   welcomeClose.addEventListener("click", ()=>{ welcomeCard.style.display="none"; });
-  setTimeout(()=>{
-    welcomeCard.style.transition="opacity 1s";
-    welcomeCard.style.opacity=0;
-    setTimeout(()=>{ welcomeCard.style.display="none"; },1000);
-  },5000);
+  setTimeout(()=>{ welcomeCard.style.transition="opacity 1s"; welcomeCard.style.opacity=0; setTimeout(()=>{ welcomeCard.style.display="none"; },1000); },5000);
 }
 
 // Chatbot
