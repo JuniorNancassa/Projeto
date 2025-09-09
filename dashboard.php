@@ -8,6 +8,8 @@ if(!isset($_SESSION['nome_usuario'])) $_SESSION['nome_usuario']="Natypanah Ferna
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Farmacêutico</title>
+<!-- Importando icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 <style>
 body { margin:0; font-family: Arial, sans-serif; background:#ecf0f1; transition: margin-left 0.3s; }
 
@@ -22,6 +24,7 @@ body { margin:0; font-family: Arial, sans-serif; background:#ecf0f1; transition:
      transition: width 0.3s, left 0.3s; 
      overflow:hidden; 
      left:0;
+      list-style: none;
 }
 .sidebar.collapsed { 
     width:0; 
@@ -41,22 +44,27 @@ body { margin:0; font-family: Arial, sans-serif; background:#ecf0f1; transition:
 
 .main{
      margin-left:220px; 
-     padding:20px; 
+     padding:50px; 
      transition: margin-left 0.3s; 
 }
 .main.collapsed{ margin-left:0; }
 
 /* --- Hamburger --- */
 #hamburger{
-  position: fixed; top: 5px; left: 25px;
-  width: 35px; height: 25px; 
+  position: fixed;
+   top: 5px; 
+   right: 25px;
+  width: 35px;
+   height: 25px; 
   cursor: pointer; 
   z-index: 10001; 
-  display: flex; flex-direction: column; justify-content: space-between;
+  display: flex; 
+  flex-direction: column;
+   justify-content: space-between;
 }
 #hamburger .bar{
   height: 4px; width: 100%; 
-  background: #ffffff; 
+  background: #1a1919ff; 
   border-radius: 2px; 
   transition: 0.3s;
 }
@@ -119,12 +127,13 @@ body { margin:0; font-family: Arial, sans-serif; background:#ecf0f1; transition:
 </div>
 
 <div class="sidebar" id="sidebar">
-  <a href="dashboard.php">Dashboard</a>
-  <a href="estoque.php">Estoque</a>
-  <a href="venda.php">Vendas</a>
-  <a href="cadastro_medicamento.php">Medicamentos</a>
-  <a href="cadastro_usuarios.php">Usuários</a>
-  <a href="pagina_inicial.php">Sair</a>
+   <li><a href="dashboard.php"><i class="bi bi-house-door-fill"></i> Início</a></li>
+        <li><a href="cadastro_usuarios.php"><i class="bi bi-person-fill"></i> Usuários</a></li>
+        <li><a href="cadastro_medicamento.php"><i class="bi bi-capsule"></i> Medicamentos</a></li>
+        <li><a href="cadastrar_fornecedor.php"><i class="bi bi-building"></i> Fornecedores</a></li>
+        <li><a href="estoque.php"><i class="bi bi-box-seam"></i> Estoque</a></li>
+        <li><a href="historico.php"><i class="bi bi-graph-up"></i> Histórico</a></li>
+        <li><a href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
 </div>
 
 <div class="main" id="main">

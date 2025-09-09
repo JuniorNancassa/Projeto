@@ -1,5 +1,7 @@
 <?php
 session_start();
+
+// Permissão: apenas admin pode acessar esta página
 if (!isset($_SESSION['usuario_logado']) || $_SESSION['tipo_usuario'] !== 'admin') {
     echo "<script>alert('Você não tem permissão para acessar esta página.'); window.location.href='dashboard.php';</script>";
     exit;
@@ -7,9 +9,7 @@ if (!isset($_SESSION['usuario_logado']) || $_SESSION['tipo_usuario'] !== 'admin'
 
 function conectar_banco() {
     $conn = new mysqli("localhost", "root", "", "farmacia");
-    if ($conn->connect_error) {
-        die("Erro: " . $conn->connect_error);
-    }
+    if ($conn->connect_error) die("Erro: " . $conn->connect_error);
     return $conn;
 }
 
@@ -61,71 +61,84 @@ if (isset($_GET['editar'])) {
 // Listar usuários
 $usuarios = $conn->query("SELECT * FROM usuarios");
 ?>
+
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <title>Gestão de Usuários</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: Arial; margin: 0; background: #f2f2f2; }
-        nav { background: #0d6efd; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        nav .logo { font-weight: bold; font-size: 18px; }
-        nav ul { display: flex; list-style: none; gap: 20px; padding-left:0; margin:0; flex-wrap: wrap; }
-        nav ul li a { color: white; text-decoration: none; font-weight: bold; }
-        nav ul li a:hover { color:rgb(10, 10, 10); }
+<meta charset="UTF-8">
+<title>Gestão de Usuários</title>
+<!-- Importando icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: Arial, sans-serif; margin: 0; background: #f2f2f2; }
 
-        .menu-toggle { display: none; font-size: 26px; background:none; border:none; color:white; cursor:pointer; }
+/* NAVBAR */
+nav { background: #0d6efd; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+nav .logo { font-weight: bold; font-size: 18px; }
+nav ul { display: flex; list-style: none; gap: 20px; padding-left:0; margin:0; flex-wrap: wrap; }
+nav ul li a { color: white; text-decoration: none; font-weight: bold; }
+nav ul li a:hover { color:rgb(10, 10, 10); }
+.menu-toggle { display: none; font-size: 26px; background:none; border:none; color:white; cursor:pointer; }
 
-        @media (max-width:768px){
-            .menu-toggle { display:block; }
-            nav ul { display:none; width:100%; flex-direction:column; gap:10px; padding:10px 0; }
-            nav ul.ativo { display:flex; }
-            nav ul li a { display:block; padding:10px; background-color:#0d6efd; border-top:1px solid rgba(255,255,255,0.2); }
-        }
+@media (max-width:768px){
+    .menu-toggle { display:block; }
+    nav ul { display:none; width:100%; flex-direction:column; gap:10px; padding:10px 0; }
+    nav ul.ativo { display:flex; }
+    nav ul li a { display:block; padding:10px; background-color:#0d6efd; border-top:1px solid rgba(255,255,255,0.2); }
+}
 
-        .container { max-width: 900px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
-        h2 { text-align: center; }
-        form label { display: block; margin-top: 15px; font-weight: bold; }
-        form select, input { width: 100%; padding: 8px; margin-top: 5px; border-radius: 5px; border:1px solid #ccc; }
-        .senha-container { position: relative; }
-        .toggle-senha { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 16px; }
-        button { padding: 10px 15px; margin-top: 15px; background: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 4px; }
-        button:hover { background: #45a049; }
-        table { width: 100%; margin-top: 30px; border-collapse: collapse; }
-        th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
-        th { background-color: #0d6efd; color:white; }
-        .msg { text-align: center; font-weight: bold; margin: 10px 0; color: green; }
-        .btn { padding: 6px 10px; font-size: 16px; border: none; cursor: pointer; text-decoration:none; border-radius:5px; margin:0 2px; display:inline-block; }
-        .btn.editar { background-color: #3498db; color: white; }
-        .btn.editar:hover { background-color: #2980b9; }
-        .btn.excluir { background-color: #e74c3c; color:white; }
-        .btn.excluir:hover { background-color:#c0392b; }
-        footer { background-color:#0d6efd; color:white; text-align:center; padding:15px 0; margin-top:40px; font-size:14px; }
+/* CONTAINER */
+.container { max-width: 900px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+h2 { text-align: center; }
 
-        /* RESPONSIVIDADE DA TABELA */
-        @media (max-width:768px){
-            table, thead, tbody, th, td, tr { display:block; }
-            thead { display:none; }
-            tr { margin-bottom:15px; border-bottom:1px solid #ccc; }
-            td { position: relative; padding-left:50%; text-align:right; }
-            td::before { content: attr(data-label); position:absolute; left:10px; width:45%; font-weight:bold; text-align:left; }
-        }
-    </style>
+/* FORM */
+form label { display: block; margin-top: 15px; font-weight: bold; }
+form select, input { width: 100%; padding: 8px; margin-top: 5px; border-radius: 5px; border:1px solid #ccc; }
+.senha-container { position: relative; }
+.toggle-senha { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 16px; }
+button { padding: 10px 15px; margin-top: 15px; background: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 4px; }
+button:hover { background: #45a049; }
+
+/* TABELA */
+table { width: 100%; margin-top: 30px; border-collapse: collapse; }
+th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+th { background-color: #0d6efd; color:white; }
+
+/* BOTÕES */
+.msg { text-align: center; font-weight: bold; margin: 10px 0; color: green; }
+.btn { padding: 6px 10px; font-size: 16px; border: none; cursor: pointer; text-decoration:none; border-radius:5px; margin:0 2px; display:inline-block; }
+.btn.editar { background-color: #3498db; color: white; }
+.btn.editar:hover { background-color: #2980b9; }
+.btn.excluir { background-color: #e74c3c; color:white; }
+.btn.excluir:hover { background-color:#c0392b; }
+
+/* FOOTER */
+footer { background-color:#0d6efd; color:white; text-align:center; padding:15px 0; margin-top:40px; font-size:14px; }
+
+/* RESPONSIVIDADE DA TABELA */
+@media (max-width:768px){
+    table, thead, tbody, th, td, tr { display:block; }
+    thead { display:none; }
+    tr { margin-bottom:15px; border-bottom:1px solid #ccc; }
+    td { position: relative; padding-left:50%; text-align:right; }
+    td::before { content: attr(data-label); position:absolute; left:10px; width:45%; font-weight:bold; text-align:left; }
+}
+</style>
 </head>
 <body>
 
 <nav>
     <div class="logo">👤 Sistema Farmácia</div>
-    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <button class="menu-toggle" id="menu-btn" onclick="toggleMenu()">☰</button>
     <ul id="menu">
-      <li><a href="dashboard.php">🏠 Início</a></li>
-      <li><a href="cadastro_usuarios.php">👤 Usuários</a></li>
-      <li><a href="cadastro_medicamento.php">💊 Medicamentos</a></li>
-      <li><a href="venda.php">🛒 Venda</a></li>
-      <li><a href="historico.php">📈 Histórico</a></li>
-      <li><a href="estoque.php">📦 Estoque</a></li>
-      <li><a href="pagina_inicial.php">🚪 Sair</a></li>
+      <li><a href="dashboard.php"><i class="bi bi-house-door-fill"></i> Início</a></li>
+        <li><a href="cadastro_usuarios.php"><i class="bi bi-person-fill"></i> Usuários</a></li>
+        <li><a href="cadastro_medicamento.php"><i class="bi bi-capsule"></i> Medicamentos</a></li>
+        <li><a href="cadastrar_fornecedor.php"><i class="bi bi-building"></i> Fornecedores</a></li>
+        <li><a href="estoque.php"><i class="bi bi-box-seam"></i> Estoque</a></li>
+        <li><a href="historico.php"><i class="bi bi-graph-up"></i> Histórico</a></li>
+        <li><a href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
     </ul>
 </nav>
 
@@ -162,9 +175,11 @@ $usuarios = $conn->query("SELECT * FROM usuarios");
         <?php endif; ?>
 
         <label>Tipo:</label>
-        <select name="tipo_usuario">
-            <option value="funcionario" <?php if (($usuario_editar['tipo_usuario'] ?? '') == 'funcionario') echo 'selected'; ?>>Funcionário</option>
+        <select name="tipo_usuario" required>
+            <option value="">Selecione</option>
             <option value="admin" <?php if (($usuario_editar['tipo_usuario'] ?? '') == 'admin') echo 'selected'; ?>>Administrador</option>
+            <option value="vendedor" <?php if (($usuario_editar['tipo_usuario'] ?? '') == 'vendedor') echo 'selected'; ?>>Vendedor</option>
+            <option value="assistenteAdmin" <?php if (($usuario_editar['tipo_usuario'] ?? '') == 'assistenteAdmin') echo 'selected'; ?>>Assistente Admin</option>
         </select>
 
         <button type="submit" name="<?php echo $usuario_editar ? 'atualizar' : 'cadastrar'; ?>">
@@ -186,11 +201,13 @@ $usuarios = $conn->query("SELECT * FROM usuarios");
                 <td data-label="Email"><?php echo $u['email']; ?></td>
                 <td data-label="Tipo"><?php echo ucfirst($u['tipo_usuario']); ?></td>
                 <td data-label="Ações">
-                <a href="?editar=<?php echo $u['id']; ?>" class="btn editar">✏️</a> |
+                    <a href="?editar=<?php echo $u['id']; ?>" class="btn editar">✏️</a>
+                    <?php if($u['tipo_usuario'] !== 'assistenteAdmin'): ?>
                     <form method="post" style="display:inline">
                         <input type="hidden" name="id" value="<?php echo $u['id']; ?>">
                         <button type="submit" name="deletar" class="btn excluir" onclick="return confirm('Tem certeza que deseja excluir?')">🗑️</button>
                     </form>
+                    <?php endif; ?>
                 </td>
             </tr>
             <?php endwhile; ?>
@@ -204,16 +221,14 @@ $usuarios = $conn->query("SELECT * FROM usuarios");
 
 <script>
 function toggleMenu() {
-    document.getElementById("menu").classList.toggle("ativo");
+    const menu = document.getElementById("menu");
+    const btn = document.getElementById("menu-btn");
+    menu.classList.toggle("ativo");
+    btn.textContent = menu.classList.contains("ativo") ? "✖" : "☰";
 }
-
 function toggleSenha(id) {
     const input = document.getElementById(id);
-    if (input.type === "password") {
-        input.type = "text";
-    } else {
-        input.type = "password";
-    }
+    input.type = input.type === "password" ? "text" : "password";
 }
 </script>
 </body>

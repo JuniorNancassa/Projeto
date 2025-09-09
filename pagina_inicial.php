@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bem-vindo | Sistema Farmacêutico</title>
+  <!-- Importando icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
@@ -188,17 +190,6 @@
 </head>
 
 <body>
-
-  <!-- Navbar 
-  <div class="navbar">
-    <div class="hamburger" onclick="toggleMenu()">
-      <div></div><div></div><div></div>
-    </div>
-    <div class="nav-links" id="navLinks">
-      <a href="login.php">Entrar</a>
-      <a href="#" onclick="openModal()">Sobre</a>
-    </div>
-  </div>-->
 
   <div class="container">
     <img src="novo_cruz.png" alt="Ícone de Farmácia" class="illustration" />
