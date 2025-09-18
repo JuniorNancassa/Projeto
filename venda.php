@@ -16,8 +16,10 @@ function conectar_banco(){
     return $conn;
 }
 
-// PROCESSAR VENDA
 $mensagem = "";
+$conn = conectar_banco();
+
+// PROCESSAR VENDA
 if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['vender'])){
     $id_medicamento   = (int)($_POST['id_medicamento'] ?? 0);
     $quantidade_venda = (int)($_POST['quantidade_venda'] ?? 0);
@@ -29,16 +31,17 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['vender'])){
     if($valor_recebido < $subtotal){
         $mensagem = "Erro: Valor recebido é inferior ao total da venda!";
     } else {
-        $conn = conectar_banco();
         $stmt = $conn->prepare("SELECT quantidade, nome FROM medicamentos WHERE id=?");
         $stmt->bind_param('i', $id_medicamento);
         $stmt->execute();
         $res = $stmt->get_result();
+
         if($res->num_rows==0){
             $mensagem="Medicamento não encontrado!";
         } else {
             $row = $res->fetch_assoc();
             $estoque_atual = (int)$row['quantidade'];
+
             if($quantidade_venda > $estoque_atual){
                 $mensagem = "Quantidade excede estoque disponível!";
             } else {
@@ -50,10 +53,21 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['vender'])){
 
                 $data_venda = date('Y-m-d H:i:s');
                 $troco = $valor_recebido - $subtotal;
+
                 $ins = $conn->prepare("INSERT INTO vendas (id_medicamento, quantidade, preco_unitario, id_usuario, subtotal, valor_recebido, troco, data_venda) VALUES (?,?,?,?,?,?,?,?)");
                 $ins->bind_param('iiidddds',$id_medicamento,$quantidade_venda,$preco_unitario,$id_usuario,$subtotal,$valor_recebido,$troco,$data_venda);
+
                 if($ins->execute()){
                     $mensagem="Venda realizada! Troco: ".number_format($troco,2,',','.');
+
+                    // ✅ Registrar no fluxo de caixa
+                    $descricao = "Venda de medicamento: " . $row['nome'];
+                    $valor = $subtotal;
+                    $tipo_movimento = "entrada";
+                    $fc = $conn->prepare("INSERT INTO fluxo_caixa (tipo, descricao, valor, data_movimento) VALUES (?,?,?,?)");
+                    $fc->bind_param('ssds', $tipo_movimento, $descricao, $valor, $data_venda);
+                    $fc->execute();
+                    $fc->close();
                 } else {
                     $mensagem="Erro: ".$ins->error;
                 }
@@ -61,9 +75,11 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['vender'])){
             }
         }
         $stmt->close();
-        $conn->close();
     }
 }
+
+// CARREGAR LISTA DE MEDICAMENTOS
+$medicamentos = $conn->query("SELECT id, nome, preco, quantidade FROM medicamentos");
 ?>
 
 <!DOCTYPE html>
@@ -72,6 +88,7 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['vender'])){
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Venda de Medicamentos</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
 body{font-family:'Segoe UI',sans-serif;background:#f1f4f9;margin:0;}
@@ -119,13 +136,14 @@ footer:hover {background: #084298;transition: background 0.3s;}
     <span class="logo">Sistema Farmacêutico</span>
     <span class="menu-toggle">&#9776;</span>
     <ul>
-      <li><a href="dashboard.php">🏠 Início</a></li>
-      <li><a href="cadastro_usuarios.php">👤 Usuários</a></li>
-      <li><a href="cadastro_medicamento.php">💊 Medicamentos</a></li>
-      <li><a href="venda.php">🛒 Venda</a></li>
-      <li><a href="historico.php">📈 Histórico</a></li>
-      <li><a href="estoque.php">📦 Estoque</a></li>
-      <li><a href="pagina_inicial.php">🚪 Sair</a></li>
+      <li><a href="dashboard.php"><i class="bi bi-house-door-fill"></i> Início</a></li>
+        <li><a href="cadastro_usuarios.php"><i class="bi bi-person-fill"></i> Usuários</a></li>
+        <li><a href="cadastro_medicamento.php"><i class="bi bi-capsule"></i> Cadastrar Medicamentos</a></li>
+        <li><a href="venda.php">🛒 Venda</a></li>
+        <li><a href="cadastrar_fornecedor.php"><i class="bi bi-building"></i> Fornecedores</a></li>
+        <li><a href="estoque.php"><i class="bi bi-box-seam"></i> Estoque</a></li>
+        <li><a href="historico.php"><i class="bi bi-graph-up"></i> Histórico</a></li>
+        <li><a href="pagina_inicial.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
     </ul>
 </nav>
 

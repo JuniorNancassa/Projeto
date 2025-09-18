@@ -16,7 +16,7 @@ function conectar_banco() {
 $conn = conectar_banco();
 
 // Lista medicamentos
-$sql = "SELECT id, nome, quantidade FROM medicamentos";
+$sql = "SELECT id, nome, quantidade, validade FROM medicamentos";
 $result = mysqli_query($conn, $sql);
 
 $medicamentos = [];
@@ -37,8 +37,7 @@ mysqli_close($conn);
 <head>
   <meta charset="UTF-8">
   <title>Estoque de Medicamentos</title>
-  <!-- Importando icons -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { font-family: Arial, sans-serif; background-color: #f2f2f2; margin: 0; }
@@ -77,12 +76,13 @@ mysqli_close($conn);
     <div class="menu-toggle" onclick="toggleMenu()"><div></div><div></div><div></div></div>
     <ul>
      <li><a href="dashboard.php"><i class="bi bi-house-door-fill"></i> Início</a></li>
-        <li><a href="cadastro_usuarios.php"><i class="bi bi-person-fill"></i> Usuários</a></li>
-        <li><a href="cadastro_medicamento.php"><i class="bi bi-capsule"></i> Medicamentos</a></li>
-        <li><a href="cadastrar_fornecedor.php"><i class="bi bi-building"></i> Fornecedores</a></li>
-        <li><a href="estoque.php"><i class="bi bi-box-seam"></i> Estoque</a></li>
-        <li><a href="historico.php"><i class="bi bi-graph-up"></i> Histórico</a></li>
-        <li><a href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+     <li><a href="cadastro_usuarios.php"><i class="bi bi-person-fill"></i> Usuários</a></li>
+     <li><a href="cadastro_medicamento.php"><i class="bi bi-capsule"></i> Cadastrar Medicamentos</a></li>
+     <li><a href="venda.php">🛒 Venda</a></li>
+     <li><a href="cadastrar_fornecedor.php"><i class="bi bi-building"></i> Fornecedores</a></li>
+     <li><a href="estoque.php"><i class="bi bi-box-seam"></i> Estoque</a></li>
+     <li><a href="historico.php"><i class="bi bi-graph-up"></i> Histórico</a></li>
+     <li><a href="pagina_inicial.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
     </ul>
   </nav>
 
@@ -98,11 +98,14 @@ mysqli_close($conn);
 
       <select name="fornecedor_id" required>
         <option value="">Selecione o fornecedor</option>
-        <?php if ($fornecedores && mysqli_num_rows($fornecedores) > 0): ?>
-          <?php while ($f = mysqli_fetch_assoc($fornecedores)): ?>
-            <option value="<?= $f['id'] ?>"><?= $f['nome'] ?></option>
-          <?php endwhile; ?>
-        <?php endif; ?>
+        <?php
+          $conn = conectar_banco();
+          $res_fornecedores = mysqli_query($conn, "SELECT id, nome FROM fornecedores ORDER BY nome ASC");
+          while ($f = mysqli_fetch_assoc($res_fornecedores)) {
+              echo "<option value='{$f['id']}'>{$f['nome']}</option>";
+          }
+          mysqli_close($conn);
+        ?>
       </select>
 
       <input type="number" name="quantidade" min="1" placeholder="Quantidade" required>
@@ -116,15 +119,6 @@ mysqli_close($conn);
       <input type="text" id="searchInput" onkeyup="filtrarMedicamentos()" placeholder="Buscar medicamento...">
     </div>
 
-    <!-- Botão gerar PDF -->
-    <div style="text-align: right; margin-bottom: 10px;">
-      <form action="relatorio_estoque.php" method="post" target="_blank">
-        <button type="submit" style="background-color:#0d6efd; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">
-          📄 Gerar Relatório PDF
-        </button>
-      </form>
-    </div>
-
     <!-- Tabela Estoque -->
     <table id="medicamentosTable">
       <thead>
@@ -134,13 +128,20 @@ mysqli_close($conn);
         <?php if (!empty($medicamentos)): ?>
           <?php foreach ($medicamentos as $row): 
               $qtd = (int)$row['quantidade'];
-              if ($qtd <= 50) {
-                  $status = "<span class='status-icon red'></span><span style='color:red;'>Baixo</span>";
-              } elseif ($qtd <= 100) {
-                  $status = "<span class='status-icon yellow'></span><span style='color:gold;'>Médio</span>";
-              } else {
-                  $status = "<span class='status-icon green'></span><span style='color:green;'>Cheio</span>";
-              }
+              $hoje = strtotime(date('Y-m-d'));
+              $validade = strtotime($row['validade']);
+              $dias_para_vencimento = ($validade - $hoje) / (60*60*24);
+
+              // Status por quantidade
+              if ($qtd <= 50) $status_qtd = "<span class='status-icon red'></span><span style='color:red;'>Baixo</span>";
+              elseif ($qtd <= 100) $status_qtd = "<span class='status-icon yellow'></span><span style='color:gold;'>Médio</span>";
+              else $status_qtd = "<span class='status-icon green'></span><span style='color:green;'>Cheio</span>";
+
+              // Status de validade
+              if ($dias_para_vencimento <= 30) $status_val = "<span class='status-icon red'></span><span style='color:red;'>Vence em breve</span>";
+              else $status_val = "<span class='status-icon green'></span><span style='color:green;'>Ok</span>";
+
+              $status = $status_qtd . " / " . $status_val;
           ?>
             <tr>
               <td><?= $row['id'] ?></td>

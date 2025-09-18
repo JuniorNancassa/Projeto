@@ -34,29 +34,85 @@ if(isset($_POST['cadastrar'])){
 
     $sql="INSERT INTO medicamentos (nome,descricao,quantidade,preco,validade,categoria,fornecedor,codigo_barras)
           VALUES ('$nome','$descricao','$quantidade','$preco','$validade','$categoria','$fornecedor','$codigo_barras')";
-    $mensagem=$conn->query($sql)?"Medicamento cadastrado!":"Erro: ".$conn->error;
+    
+    if($conn->query($sql)){
+        $mensagem="Medicamento cadastrado!";
+
+        // -----------------------------
+        // REGISTRAR HISTÓRICO FORNECEDOR
+        // -----------------------------
+        $data_registro = date("Y-m-d H:i:s");
+        $sql_hist="INSERT INTO historico_fornecedores (id_fornecedor, medicamento, quantidade, preco, data_registro)
+                   VALUES ('$fornecedor','$nome','$quantidade','$preco','$data_registro')";
+        $conn->query($sql_hist);
+
+        // -----------------------------
+        // REGISTRAR FLUXO DE CAIXA (saída)
+        // -----------------------------
+        $tipo_movimento = "saida"; // compra é saída de caixa
+        $descricao_mov = "Compra de medicamento: $nome (Fornecedor ID: $fornecedor)";
+        $valor_total = $quantidade * $preco;
+
+        $sql_fc="INSERT INTO fluxo_caixa (tipo, descricao, valor, data_movimento)
+                 VALUES ('$tipo_movimento','$descricao_mov','$valor_total','$data_registro')";
+        $conn->query($sql_fc);
+
+    } else {
+        $mensagem="Erro: ".$conn->error;
+    }
 }
 
 // Atualizar
 if(isset($_POST['atualizar'])){
-    $id=(int)$_POST['id'];
+    $id=$_POST['id'];
     $nome=$conn->real_escape_string($_POST['nome']);
     $descricao=$conn->real_escape_string($_POST['descricao']);
-    $quantidade=(int)$_POST['quantidade'];
+    $quantidade_nova=(int)$_POST['quantidade'];
     $preco=(float)$_POST['preco'];
     $validade=$conn->real_escape_string($_POST['validade']);
     $categoria=$conn->real_escape_string($_POST['categoria']);
     $fornecedor=(int)$_POST['fornecedor'];
     $codigo_barras=$conn->real_escape_string($_POST['codigo_barras']);
 
-    if(strtotime($validade)<strtotime(date("Y-m-d"))){
-        echo "<script>alert('Data inválida!'); window.history.back();</script>"; exit;
-    }
+    // Buscar quantidade antiga
+    $res_antiga = $conn->query("SELECT quantidade FROM medicamentos WHERE id='$id'");
+    $row_antiga = $res_antiga->fetch_assoc();
+    $quantidade_antiga = (int)$row_antiga['quantidade'];
 
-    $sql="UPDATE medicamentos SET nome='$nome', descricao='$descricao',
-          quantidade='$quantidade', preco='$preco', validade='$validade', categoria='$categoria', fornecedor='$fornecedor', codigo_barras='$codigo_barras' WHERE id=$id";
-    $mensagem=$conn->query($sql)?"Atualizado!":"Erro: ".$conn->error;
+    $sql="UPDATE medicamentos SET nome='$nome',descricao='$descricao',quantidade='$quantidade_nova',
+          preco='$preco',validade='$validade',categoria='$categoria',fornecedor='$fornecedor',
+          codigo_barras='$codigo_barras' WHERE id='$id'";
+
+    if($conn->query($sql)){
+        $mensagem="Medicamento atualizado!";
+
+        // -----------------------------
+        // SE A QUANTIDADE AUMENTOU → registrar no histórico e fluxo de caixa
+        // -----------------------------
+        if($quantidade_nova > $quantidade_antiga){
+            $adicionado = $quantidade_nova - $quantidade_antiga;
+            $data_registro = date("Y-m-d H:i:s");
+
+            // Histórico fornecedores
+            $sql_hist="INSERT INTO historico_fornecedores (id_fornecedor, medicamento, quantidade, preco, data_registro)
+                       VALUES ('$fornecedor','$nome','$adicionado','$preco','$data_registro')";
+            $conn->query($sql_hist);
+
+            // Fluxo de caixa (saída)
+            $tipo_movimento = "saida";
+            $descricao_mov = "Abastecimento de medicamento: $nome (Fornecedor ID: $fornecedor)";
+            $valor_total = $adicionado * $preco;
+
+            $sql_fc="INSERT INTO fluxo_caixa (tipo, descricao, valor, data_movimento)
+                     VALUES ('$tipo_movimento','$descricao_mov','$valor_total','$data_registro')";
+            $conn->query($sql_fc);
+        }
+
+    } else {
+        $mensagem="Erro: ".$conn->error;
+    }
 }
+
 
 // Deletar
 if(isset($_POST['deletar'])){
@@ -125,11 +181,12 @@ th{background:#0d6efd;color:white;}
   <ul id="menu">
     <li><a href="dashboard.php"><i class="bi bi-house-door-fill"></i> Início</a></li>
         <li><a href="cadastro_usuarios.php"><i class="bi bi-person-fill"></i> Usuários</a></li>
-        <li><a href="cadastro_medicamento.php"><i class="bi bi-capsule"></i> Medicamentos</a></li>
+        <li><a href="cadastro_medicamento.php"><i class="bi bi-capsule"></i> Cadastrar Medicamentos</a></li>
+        <li><a href="venda.php"> 🛒Venda</a></li>
         <li><a href="cadastrar_fornecedor.php"><i class="bi bi-building"></i> Fornecedores</a></li>
         <li><a href="estoque.php"><i class="bi bi-box-seam"></i> Estoque</a></li>
         <li><a href="historico.php"><i class="bi bi-graph-up"></i> Histórico</a></li>
-        <li><a href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+        <li><a href="pagina_inicial.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
   </ul>
 </nav>
 

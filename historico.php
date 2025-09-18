@@ -74,20 +74,69 @@ $mais_vendido = $conn->query("SELECT m.nome, SUM(v.quantidade) AS total_qtd
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-body { background-color: #f4f6f9; margin:0; font-family: "Segoe UI", sans-serif; }
-header { background: linear-gradient(90deg, #0d6efd, #0b5ed7); color: white; text-align: center; padding: 20px; font-size: 1.8rem; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
-nav { background-color: #0d6efd; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: relative; }
-nav .logo { font-weight: bold; font-size: 20px; }
+body { 
+    background-color: #f4f6f9; 
+    margin:0; 
+    font-family: "Segoe UI", sans-serif; 
+}
 
-/* Botão hamburger sempre visível */
+header { 
+    background: linear-gradient(90deg, #0d6efd, #0b5ed7); 
+    color: white; 
+    text-align: center; 
+    padding: 20px; 
+    font-size: 1.8rem; 
+    font-weight: bold; 
+    box-shadow: 0 2px 5px rgba(15, 10, 10, 0.2);
+}
+
+nav { 
+    background-color: #0d6efd; 
+    color: white; 
+    padding: 12px 20px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    position: relative; 
+    flex-wrap: wrap;
+}
+
+nav .logo { 
+    font-weight: bold; 
+    font-size: 20px; 
+}
+
+/* Menu horizontal padrão */
+nav ul { 
+    display: flex; 
+    flex-direction: row; 
+    gap: 15px;
+    list-style: none; 
+    margin: 0; 
+    padding: 0;
+}
+
+nav ul li a { 
+    color: white; 
+    text-decoration: none; 
+    font-weight: 500; 
+    transition: color 0.3s; 
+}
+
+nav ul li a:hover { 
+    color: #020202ff; 
+}
+
+/* Botão hamburger - apenas em telas pequenas */
 .menu-toggle {
-    display: block;
+    display: none; /* desktop: escondido */
     cursor: pointer;
     width: 30px;
     height: 22px;
     position: relative;
     z-index: 1100;
 }
+
 .menu-toggle span {
     background: white;
     position: absolute;
@@ -96,6 +145,7 @@ nav .logo { font-weight: bold; font-size: 20px; }
     left: 0;
     transition: 0.3s;
 }
+
 .menu-toggle span:nth-child(1){ top:0; }
 .menu-toggle span:nth-child(2){ top:9px; }
 .menu-toggle span:nth-child(3){ top:18px; }
@@ -103,37 +153,75 @@ nav .logo { font-weight: bold; font-size: 20px; }
 .menu-toggle.active span:nth-child(2){ opacity:0; }
 .menu-toggle.active span:nth-child(3){ transform:rotate(-45deg); top:9px; }
 
-/* Menu lateral fixo */
-nav ul {
-    display: none;
-    flex-direction: column;
-    position: fixed;
-    top: 60px;
-    left: 0;
-    width: 250px;
-    height: 100%;
-    background: #0d6efd;
-    padding: 20px;
-    border-right: 2px solid #0b5ed7;
-    z-index: 1000;
-}
-nav ul li { 
-    margin: 10px 0; 
-  list-style:none;
-}
-nav ul li a { color: white; text-decoration: none; font-weight: 500; transition: color 0.3s; }
-nav ul li a:hover { 
-    color: #020202ff;
-}
-nav ul.active { display: flex; }
+/* Mobile: menu lateral vertical */
+@media (max-width: 991px) {
+    nav ul {
+        display: none;
+        flex-direction: column;
+        position: fixed;
+        top: 60px;
+        left: 0;
+        width: 250px;
+        height: 100%;
+        background: #0d6efd;
+        padding: 20px;
+        border-right: 2px solid #0b5ed7;
+        z-index: 1000;
+        gap: 10px;
+    }
+    nav ul.active { display: flex; }
 
-.container { background-color: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 25px auto; max-width: 1200px; }
-.table th { background-color: #0d6efd; color: white; }
-.chart-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-.chart-box { flex: 1; min-width: 280px; max-width: 500px; }
-.btn-custom { background-color: #198754; color: white; border-radius: 8px; }
-.btn-custom:hover { background-color: #146c43; }
-footer { background:#0d6efd; color:white; text-align:center; padding:15px; margin-top:40px; }
+    nav .logo { flex: 1; }
+
+    .menu-toggle { display: block; }
+}
+
+/* Containers e tabelas */
+.container { 
+    background-color: #fff; 
+    padding: 25px; 
+    border-radius: 10px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+    margin: 25px auto; 
+    max-width: 1200px; 
+}
+
+.table th { 
+    background-color: #0d6efd; 
+    color: white; 
+}
+
+.chart-container { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 20px; 
+    justify-content: center; 
+}
+
+.chart-box { 
+    flex: 1; 
+    min-width: 280px; 
+    max-width: 500px; 
+}
+
+.btn-custom { 
+    background-color: #198754; 
+    color: white; 
+    border-radius: 8px; 
+}
+
+.btn-custom:hover { 
+    background-color: #146c43; 
+}
+
+footer { 
+    background:#0d6efd; 
+    color:white; 
+    text-align:center; 
+    padding:15px; 
+    margin-top:40px; 
+}
+
 </style>
 </head>
 <body>
@@ -147,11 +235,12 @@ footer { background:#0d6efd; color:white; text-align:center; padding:15px; margi
     <ul>
       <li><a href="dashboard.php"><i class="bi bi-house-door-fill"></i> Início</a></li>
         <li><a href="cadastro_usuarios.php"><i class="bi bi-person-fill"></i> Usuários</a></li>
-        <li><a href="cadastro_medicamento.php"><i class="bi bi-capsule"></i> Medicamentos</a></li>
+        <li><a href="cadastro_medicamento.php"><i class="bi bi-capsule"></i> Cadastrar Medicamentos</a></li>
+        <li><a href="venda.php">🛒 Venda</a></li>
         <li><a href="cadastrar_fornecedor.php"><i class="bi bi-building"></i> Fornecedores</a></li>
         <li><a href="estoque.php"><i class="bi bi-box-seam"></i> Estoque</a></li>
         <li><a href="historico.php"><i class="bi bi-graph-up"></i> Histórico</a></li>
-        <li><a href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+        <li><a href="pagina_inicial.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
     </ul>
 </nav>
 
@@ -224,6 +313,7 @@ footer { background:#0d6efd; color:white; text-align:center; padding:15px; margi
             <thead><tr><th>Fornecedor</th><th>Medicamento</th><th>Quantidade</th><th>Data</th></tr></thead>
             <tbody>
             <?php 
+            $historico = null; // inicializa a variável
             if($historico && $historico->num_rows>0): ?>
                 <?php while($row = $historico->fetch_assoc()): ?>
                     <tr>

@@ -127,13 +127,14 @@ body { margin:0; font-family: Arial, sans-serif; background:#ecf0f1; transition:
 </div>
 
 <div class="sidebar" id="sidebar">
-   <li><a href="dashboard.php"><i class="bi bi-house-door-fill"></i> Início</a></li>
+      <li><a href="dashboard.php"><i class="bi bi-house-door-fill"></i> Início</a></li>
         <li><a href="cadastro_usuarios.php"><i class="bi bi-person-fill"></i> Usuários</a></li>
-        <li><a href="cadastro_medicamento.php"><i class="bi bi-capsule"></i> Medicamentos</a></li>
+        <li><a href="cadastro_medicamento.php"><i class="bi bi-capsule"></i> Cadastrar Medicamentos</a></li>
+        <li><a href="venda.php"><i></i>🛒 Venda</a></li>
         <li><a href="cadastrar_fornecedor.php"><i class="bi bi-building"></i> Fornecedores</a></li>
         <li><a href="estoque.php"><i class="bi bi-box-seam"></i> Estoque</a></li>
         <li><a href="historico.php"><i class="bi bi-graph-up"></i> Histórico</a></li>
-        <li><a href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+        <li><a href="pagina_inicial.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
 </div>
 
 <div class="main" id="main">
