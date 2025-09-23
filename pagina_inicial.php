@@ -194,7 +194,7 @@
   <div class="container">
     <img src="novo_cruz.png" alt="Ícone de Farmácia" class="illustration" />
     <div class="icon"><i class="fas fa-capsules"></i></div>
-    <h1>Bem-vindo ao Sistema de Gestão Farmacêutica</h1>
+    <h1>Bem-vindo ao Sistema da Farmácia Alium</h1>
     <p>Controle, otimize e monitore sua farmácia com segurança e eficiência.</p>
     <a href="login.php" class="btn"><i class="fas fa-sign-in-alt"></i> Entrar</a>
     <button class="btn" onclick="openModal()"><i class="fas fa-info-circle"></i> Sobre o sistema</button>
@@ -205,7 +205,7 @@
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">&times;</span>
       <h2>Sobre o Sistema</h2>
-      <p>Este sistema foi desenvolvido para auxiliar farmácias na gestão de estoque, vendas, validade de medicamentos, usuários e relatórios em PDF. Ele garante eficiência, controle e segurança no atendimento farmacêutico.</p>
+      <p>Este sistema foi desenvolvido para auxiliar farmácias na gestão de estoque, vendas, validade de medicamentos, usuários,fornecedores, histórico dos fornecedores e relatórios em PDF. Ele garante eficiência, controle e segurança no atendimento farmacêutico.</p>
     </div>
   </div>
 

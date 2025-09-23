@@ -151,7 +151,7 @@ footer{background:#0d6efd;color:white;padding:15px 0;text-align:center;margin-to
 <tr>
 <td><?= ucfirst($row['tipo']) ?></td>
 <td><?= $row['descricao'] ?></td>
-<td>R$ <?= number_format($row['valor'],2,",",".") ?></td>
+<td>CFA<?= number_format($row['valor'],2,",",".") ?></td>
 <td><?= $row['data_movimento'] ?></td>
 </tr>
 <?php endwhile; ?>
@@ -184,7 +184,7 @@ datasets:[
 },
 options:{
 responsive:true,
-plugins:{legend:{position:'top'}, tooltip:{callbacks:{label: ctx=>ctx.dataset.label+': CFA '+ctx.raw.toFixed(2)}}},
+plugins:{legend:{position:'top'}, tooltip:{callbacks:{label: ctx=>ctx.dataset.label+': CFA ' + ctx.raw.toFixed(2)}}},
 scales:{y:{beginAtZero:true,title:{display:true,text:'Valor (CFA)'}},x:{title:{display:true,text:'Data'}}}
 }
 });
