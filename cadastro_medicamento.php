@@ -17,39 +17,62 @@ $mensagem="";
 // Buscar fornecedores
 $fornecedores = $conn->query("SELECT id,nome FROM fornecedores ORDER BY nome ASC");
 
-// Cadastrar
+// -----------------------------
+// CADASTRAR
+// -----------------------------
 if(isset($_POST['cadastrar'])){
-    $nome=$conn->real_escape_string($_POST['nome']);
+    $nome=trim($conn->real_escape_string($_POST['nome']));
     $descricao=$conn->real_escape_string($_POST['descricao']);
     $quantidade=(int)$_POST['quantidade'];
     $preco=(float)$_POST['preco'];
-    $validade=$conn->real_escape_string($_POST['validade']);
+    $validade=trim($conn->real_escape_string($_POST['validade']));
     $categoria=$conn->real_escape_string($_POST['categoria']);
     $fornecedor=(int)$_POST['fornecedor'];
-    $codigo_barras=$conn->real_escape_string($_POST['codigo_barras']);
+    $codigo_barras=trim($conn->real_escape_string($_POST['codigo_barras']));
 
-    if(strtotime($validade)<strtotime(date("Y-m-d"))){
-        echo "<script>alert('Data inválida!'); window.history.back();</script>"; exit;
+    // 🔹 Validações
+    if(empty($nome)){
+        echo "<script>alert('O nome do medicamento é obrigatório!'); window.history.back();</script>"; exit;
+    }
+    if($preco <= 0){
+        echo "<script>alert('O preço deve ser maior que 0!'); window.history.back();</script>"; exit;
+    }
+    if($quantidade < 0){
+        echo "<script>alert('A quantidade não pode ser negativa!'); window.history.back();</script>"; exit;
+    }
+    if(empty($validade) || strtotime($validade)<strtotime(date("Y-m-d"))){
+        echo "<script>alert('A validade deve ser uma data futura!'); window.history.back();</script>"; exit;
+    }
+    if($fornecedor <= 0){
+        echo "<script>alert('Selecione um fornecedor válido!'); window.history.back();</script>"; exit;
+    }
+    if(empty($codigo_barras) || !is_numeric($codigo_barras)){
+        echo "<script>alert('Informe um código de barras válido (apenas números)!'); window.history.back();</script>"; exit;
     }
 
+    // 🔹 Verifica duplicidade de código de barras
+    $check = $conn->query("SELECT id FROM medicamentos WHERE codigo_barras='$codigo_barras'");
+    if($check->num_rows > 0){
+        echo "<script>alert('Já existe um medicamento com este código de barras!'); window.history.back();</script>"; exit;
+    }
+
+    // Inserir
     $sql="INSERT INTO medicamentos (nome,descricao,quantidade,preco,validade,categoria,fornecedor,codigo_barras)
           VALUES ('$nome','$descricao','$quantidade','$preco','$validade','$categoria','$fornecedor','$codigo_barras')";
     
     if($conn->query($sql)){
         $mensagem="Medicamento cadastrado!";
+        $id_medicamento = $conn->insert_id;
 
-        // -----------------------------
-        // REGISTRAR HISTÓRICO FORNECEDOR
-        // -----------------------------
         $data_registro = date("Y-m-d H:i:s");
-        $sql_hist="INSERT INTO historico_fornecedores (id_fornecedor, medicamento, quantidade, preco, data_registro)
-                   VALUES ('$fornecedor','$nome','$quantidade','$preco','$data_registro')";
+
+        // Histórico fornecedores
+        $sql_hist="INSERT INTO historico_fornecedores (id_fornecedor, medicamento_id, quantidade, preco, data_registro)
+                   VALUES ('$fornecedor','$id_medicamento','$quantidade','$preco','$data_registro')";
         $conn->query($sql_hist);
 
-        // -----------------------------
-        // REGISTRAR FLUXO DE CAIXA (saída)
-        // -----------------------------
-        $tipo_movimento = "saida"; // compra é saída de caixa
+        // Fluxo de caixa (saída)
+        $tipo_movimento = "saida"; 
         $descricao_mov = "Compra de medicamento: $nome (Fornecedor ID: $fornecedor)";
         $valor_total = $quantidade * $preco;
 
@@ -58,21 +81,35 @@ if(isset($_POST['cadastrar'])){
         $conn->query($sql_fc);
 
     } else {
-        $mensagem="Erro: ".$conn->error;
+        echo "<script>alert('Erro ao cadastrar: ".$conn->error."'); window.history.back();</script>";
+        exit;
     }
 }
 
-// Atualizar
+// -----------------------------
+// ATUALIZAR
+// -----------------------------
 if(isset($_POST['atualizar'])){
-    $id=$_POST['id'];
-    $nome=$conn->real_escape_string($_POST['nome']);
+    $id=(int)$_POST['id'];
+    $nome=trim($conn->real_escape_string($_POST['nome']));
     $descricao=$conn->real_escape_string($_POST['descricao']);
     $quantidade_nova=(int)$_POST['quantidade'];
     $preco=(float)$_POST['preco'];
-    $validade=$conn->real_escape_string($_POST['validade']);
+    $validade=trim($conn->real_escape_string($_POST['validade']));
     $categoria=$conn->real_escape_string($_POST['categoria']);
     $fornecedor=(int)$_POST['fornecedor'];
-    $codigo_barras=$conn->real_escape_string($_POST['codigo_barras']);
+    $codigo_barras=trim($conn->real_escape_string($_POST['codigo_barras']));
+
+    // 🔹 Validações semelhantes ao cadastro
+    if(empty($nome) || $preco <= 0 || $quantidade_nova < 0 || empty($validade) || strtotime($validade)<strtotime(date("Y-m-d")) || $fornecedor <= 0 || empty($codigo_barras)){
+        echo "<script>alert('Verifique os campos obrigatórios e valores válidos!'); window.history.back();</script>"; exit;
+    }
+
+    // 🔹 Evitar duplicidade do código de barras (exceto o próprio ID)
+    $check = $conn->query("SELECT id FROM medicamentos WHERE codigo_barras='$codigo_barras' AND id <> '$id'");
+    if($check->num_rows > 0){
+        echo "<script>alert('Já existe outro medicamento com este código de barras!'); window.history.back();</script>"; exit;
+    }
 
     // Buscar quantidade antiga
     $res_antiga = $conn->query("SELECT quantidade FROM medicamentos WHERE id='$id'");
@@ -85,20 +122,16 @@ if(isset($_POST['atualizar'])){
 
     if($conn->query($sql)){
         $mensagem="Medicamento atualizado!";
+        $data_registro = date("Y-m-d H:i:s");
 
-        // -----------------------------
-        // SE A QUANTIDADE AUMENTOU → registrar no histórico e fluxo de caixa
-        // -----------------------------
+        // Se a quantidade aumentou → registrar histórico e fluxo de caixa
         if($quantidade_nova > $quantidade_antiga){
             $adicionado = $quantidade_nova - $quantidade_antiga;
-            $data_registro = date("Y-m-d H:i:s");
 
-            // Histórico fornecedores
-            $sql_hist="INSERT INTO historico_fornecedores (id_fornecedor, medicamento, quantidade, preco, data_registro)
-                       VALUES ('$fornecedor','$nome','$adicionado','$preco','$data_registro')";
+            $sql_hist="INSERT INTO historico_fornecedores (id_fornecedor, medicamento_id, quantidade, preco, data_registro)
+                       VALUES ('$fornecedor','$id','$adicionado','$preco','$data_registro')";
             $conn->query($sql_hist);
 
-            // Fluxo de caixa (saída)
             $tipo_movimento = "saida";
             $descricao_mov = "Abastecimento de medicamento: $nome (Fornecedor ID: $fornecedor)";
             $valor_total = $adicionado * $preco;
@@ -109,12 +142,14 @@ if(isset($_POST['atualizar'])){
         }
 
     } else {
-        $mensagem="Erro: ".$conn->error;
+        echo "<script>alert('Erro ao atualizar: ".$conn->error."'); window.history.back();</script>";
+        exit;
     }
 }
 
-
-// Deletar
+// -----------------------------
+// DELETAR
+// -----------------------------
 if(isset($_POST['deletar'])){
     $id=(int)$_POST['id'];
     $conn->query("DELETE FROM medicamentos WHERE id=$id");
@@ -131,6 +166,7 @@ if(isset($_GET['editar'])){
 
 // Listar medicamentos com fornecedor
 $dados=$conn->query("SELECT m.*, f.nome AS fornecedor_nome FROM medicamentos m LEFT JOIN fornecedores f ON m.fornecedor=f.id");
+
 ?>
 
 <!DOCTYPE html>

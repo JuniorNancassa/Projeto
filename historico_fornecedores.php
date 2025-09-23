@@ -12,21 +12,24 @@ if($conn->connect_error) die("Erro: ".$conn->connect_error);
 // Filtros
 $filtroFornecedor = $_GET['fornecedor'] ?? '';
 $filtroDataInicio = $_GET['data_inicio'] ?? '';
-$filtroDataFim = $_GET['data_fim'] ?? '';
+$filtroDataFim    = $_GET['data_fim'] ?? '';
 
-// PDF
+// ------------------
+// Exportar PDF
+// ------------------
 if(isset($_GET['exportar_pdf'])){
     require 'vendor/autoload.php';
     $dompdf = new \Dompdf\Dompdf();
 
-    $sqlPdf = "SELECT hf.id, f.nome AS fornecedor, m.nome AS medicamento, hf.quantidade, hf.data_fornecimento
-               FROM historico_fornecimento hf
+    // Consulta já filtrada
+    $sqlPdf = "SELECT hf.id, f.nome AS fornecedor, m.nome AS medicamento, hf.quantidade, hf.data_registro
+               FROM historico_fornecedores hf
                JOIN fornecedores f ON hf.fornecedor_id=f.id
                JOIN medicamentos m ON hf.medicamento_id=m.id
                WHERE 1=1";
     if($filtroFornecedor) $sqlPdf .= " AND f.nome LIKE '%$filtroFornecedor%'";
-    if($filtroDataInicio && $filtroDataFim) $sqlPdf .= " AND hf.data_fornecimento BETWEEN '$filtroDataInicio' AND '$filtroDataFim'";
-    $sqlPdf .= " ORDER BY hf.data_fornecimento DESC";
+    if($filtroDataInicio && $filtroDataFim) $sqlPdf .= " AND hf.data_registro BETWEEN '$filtroDataInicio' AND '$filtroDataFim'";
+    $sqlPdf .= " ORDER BY hf.data_registro DESC";
 
     $resPdf = $conn->query($sqlPdf);
 
@@ -38,7 +41,7 @@ if(isset($_GET['exportar_pdf'])){
                     <td>{$row['fornecedor']}</td>
                     <td>{$row['medicamento']}</td>
                     <td>{$row['quantidade']}</td>
-                    <td>{$row['data_fornecimento']}</td>
+                    <td>{$row['data_registro']}</td>
                   </tr>";
     }
     $html .= "</table>";
@@ -50,42 +53,52 @@ if(isset($_GET['exportar_pdf'])){
     exit;
 }
 
+// ------------------
 // Consulta detalhada
-$sql = "SELECT hf.id, f.nome AS fornecedor, m.nome AS medicamento, hf.quantidade, hf.data_fornecimento
-        FROM historico_fornecimento hf
+// ------------------
+$sql = "SELECT hf.id, f.nome AS fornecedor, m.nome AS medicamento, hf.quantidade, hf.data_registro
+        FROM historico_fornecedores hf
         JOIN fornecedores f ON hf.fornecedor_id=f.id
         JOIN medicamentos m ON hf.medicamento_id=m.id
         WHERE 1=1";
 if ($filtroFornecedor) $sql .= " AND f.nome LIKE '%$filtroFornecedor%'";
-if ($filtroDataInicio && $filtroDataFim) $sql .= " AND hf.data_fornecimento BETWEEN '$filtroDataInicio' AND '$filtroDataFim'";
-$sql .= " ORDER BY hf.data_fornecimento DESC";
+if ($filtroDataInicio && $filtroDataFim) $sql .= " AND hf.data_registro BETWEEN '$filtroDataInicio' AND '$filtroDataFim'";
+$sql .= " ORDER BY hf.data_registro DESC";
 $result = $conn->query($sql);
 
-// Resumo estatístico
-$totalQuery = "SELECT SUM(hf.quantidade) AS total_unidades FROM historico_fornecimento hf WHERE 1=1";
+// ------------------
+// Estatísticas
+// ------------------
+$totalQuery = "SELECT SUM(hf.quantidade) AS total_unidades 
+               FROM historico_fornecedores hf 
+               WHERE 1=1";
 if ($filtroFornecedor) $totalQuery .= " AND hf.fornecedor_id IN (SELECT id FROM fornecedores WHERE nome LIKE '%$filtroFornecedor%')";
-if ($filtroDataInicio && $filtroDataFim) $totalQuery .= " AND hf.data_fornecimento BETWEEN '$filtroDataInicio' AND '$filtroDataFim'";
+if ($filtroDataInicio && $filtroDataFim) $totalQuery .= " AND hf.data_registro BETWEEN '$filtroDataInicio' AND '$filtroDataFim'";
 $totalUnidades = $conn->query($totalQuery)->fetch_assoc()['total_unidades'] ?? 0;
 
-$topFornecedorQuery = "SELECT f.nome, SUM(hf.quantidade) AS total FROM historico_fornecimento hf
-                       JOIN fornecedores f ON hf.fornecedor_id=f.id WHERE 1=1";
-if ($filtroDataInicio && $filtroDataFim) $topFornecedorQuery .= " AND hf.data_fornecimento BETWEEN '$filtroDataInicio' AND '$filtroDataFim'";
+$topFornecedorQuery = "SELECT f.nome, SUM(hf.quantidade) AS total 
+                       FROM historico_fornecedores hf
+                       JOIN fornecedores f ON hf.fornecedor_id=f.id
+                       WHERE 1=1";
+if ($filtroDataInicio && $filtroDataFim) $topFornecedorQuery .= " AND hf.data_registro BETWEEN '$filtroDataInicio' AND '$filtroDataFim'";
 $topFornecedorQuery .= " GROUP BY f.nome ORDER BY total DESC LIMIT 1";
 $topFornecedor = $conn->query($topFornecedorQuery)->fetch_assoc()['nome'] ?? 'N/A';
 
-$topMesQuery = "SELECT MONTH(hf.data_fornecimento) AS mes, SUM(hf.quantidade) AS total
-                FROM historico_fornecimento hf WHERE 1=1";
-if ($filtroDataInicio && $filtroDataFim) $topMesQuery .= " AND hf.data_fornecimento BETWEEN '$filtroDataInicio' AND '$filtroDataFim'";
-$topMesQuery .= " GROUP BY MONTH(hf.data_fornecimento) ORDER BY total DESC LIMIT 1";
+$topMesQuery = "SELECT MONTH(hf.data_registro) AS mes, SUM(hf.quantidade) AS total
+                FROM historico_fornecedores hf WHERE 1=1";
+if ($filtroDataInicio && $filtroDataFim) $topMesQuery .= " AND hf.data_registro BETWEEN '$filtroDataInicio' AND '$filtroDataFim'";
+$topMesQuery .= " GROUP BY MONTH(hf.data_registro) ORDER BY total DESC LIMIT 1";
 $topMes = $conn->query($topMesQuery)->fetch_assoc()['mes'] ?? 0;
 $meses = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 $topMesNome = $meses[$topMes-1] ?? 'N/A';
 
+// ------------------
 // Dados para gráfico
-$graficoQuery = "SELECT f.nome AS fornecedor, MONTH(hf.data_fornecimento) AS mes, SUM(hf.quantidade) AS total
-                 FROM historico_fornecimento hf
+// ------------------
+$graficoQuery = "SELECT f.nome AS fornecedor, MONTH(hf.data_registro) AS mes, SUM(hf.quantidade) AS total
+                 FROM historico_fornecedores hf
                  JOIN fornecedores f ON hf.fornecedor_id=f.id
-                 GROUP BY f.nome, MONTH(hf.data_fornecimento)";
+                 GROUP BY f.nome, MONTH(hf.data_registro)";
 $graficoResult = $conn->query($graficoQuery);
 $dadosGrafico = [];
 while ($row = $graficoResult->fetch_assoc()) {
@@ -108,7 +121,6 @@ footer{background:#343a40;color:white;padding:15px 0;text-align:center;margin-to
 </head>
 <body>
 
-<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
   <div class="container-fluid">
     <a class="navbar-brand" href="menu_admin.php">👨 Administrador</a>
@@ -126,7 +138,6 @@ footer{background:#343a40;color:white;padding:15px 0;text-align:center;margin-to
 </nav>
 
 <div class="container">
-
 <h2 class="mb-4">📦 Histórico de Fornecedores</h2>
 
 <!-- FILTROS -->
@@ -137,7 +148,8 @@ footer{background:#343a40;color:white;padding:15px 0;text-align:center;margin-to
   <div class="col-md-2 d-grid"><button type="submit" class="btn btn-primary">Pesquisar</button></div>
 </form>
 
-<a href="gerar_relatorio.php?tipo=fornecedor&fornecedor=Junior&data_inicio=2025-09-01&data_fim=2025-09-15" class="btn btn-danger mb-3">📄 Exportar PDF</a>
+<!-- BOTÃO DE EXPORTAR PDF -->
+<a href="relatorio_historico_fornecedores.php" class="btn btn-danger mb-3">📄 Exportar PDF</a>
 
 <!-- RESUMO -->
 <div class="row mb-4 text-center">
@@ -156,7 +168,7 @@ footer{background:#343a40;color:white;padding:15px 0;text-align:center;margin-to
 <td><?= $row['fornecedor'] ?></td>
 <td><?= $row['medicamento'] ?></td>
 <td><?= $row['quantidade'] ?></td>
-<td><?= $row['data_fornecimento'] ?></td>
+<td><?= $row['data_registro'] ?></td>
 </tr>
 <?php endwhile; ?>
 </tbody>
@@ -169,7 +181,6 @@ footer{background:#343a40;color:white;padding:15px 0;text-align:center;margin-to
 
 </div>
 
-<!-- FOOTER -->
 <footer>
   &copy; <?= date("Y") ?> Farmácia Dashboard. Todos os direitos reservados.
 </footer>
@@ -188,7 +199,7 @@ const datasets = [
 foreach($dadosGrafico as $fornecedor=>$dados){
     $totais=array_fill(1,12,0);
     foreach($dados as $d) $totais[$d['mes']]=$d['total'];
-    echo "{label:'$fornecedor', data:[".implode(",", $totais)."], backgroundColor:gerarCor()},";
+    echo "{label:'$fornecedor', data:[".implode(",", $totais)."], backgroundColor:gerarCor()},"; 
 }
 ?>
 ];
@@ -203,6 +214,5 @@ scales:{y:{beginAtZero:true,title:{display:true,text:'Quantidade Fornecida'}},x:
 }
 });
 </script>
-
 </body>
 </html>

@@ -55,7 +55,11 @@ $totalSaidas = $conn->query("SELECT SUM(valor) AS total FROM fluxo_caixa WHERE t
 $saldo = $totalEntradas - $totalSaidas;
 
 // Resumo de vendas
-$vendasDiarias = $conn->query("SELECT SUM(valor) AS total FROM fluxo_caixa WHERE tipo='entrada' AND data_movimento=CURDATE()")->fetch_assoc()['total'] ?? 0;
+$vendasDiarias = $conn->query("SELECT SUM(valor) AS total 
+                               FROM fluxo_caixa 
+                               WHERE tipo='entrada' 
+                               AND DATE(data_movimento) = CURDATE()")->fetch_assoc()['total'] ?? 0;
+
 $vendasSemanais = $conn->query("SELECT SUM(valor) AS total FROM fluxo_caixa WHERE tipo='entrada' AND WEEK(data_movimento)=WEEK(CURDATE())")->fetch_assoc()['total'] ?? 0;
 $vendasMensais = $conn->query("SELECT SUM(valor) AS total FROM fluxo_caixa WHERE tipo='entrada' AND MONTH(data_movimento)=MONTH(CURDATE())")->fetch_assoc()['total'] ?? 0;
 
@@ -123,7 +127,7 @@ footer{background:#0d6efd;color:white;padding:15px 0;text-align:center;margin-to
   <div class="col-md-4 d-grid"><button type="submit" class="btn btn-light text-primary">Filtrar</button></div>
 </form>
 
-<a href="gerar_relatorio.php?tipo=fluxo&data_inicio=2025-09-01&data_fim=2025-09-15" class="btn btn-danger mb-3">📄 Exportar PDF</a>
+<a href="relatorio_fluxo_caixa.php" class="btn btn-danger mb-3">📄 Exportar PDF</a>
 
 <!-- CARDS RESUMO -->
 <div class="row mb-4 text-center">
