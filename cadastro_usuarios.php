@@ -7,6 +7,7 @@ if (!isset($_SESSION['usuario_logado']) || $_SESSION['tipo_usuario'] !== 'admin'
     exit;
 }
 
+// Função de conexão
 function conectar_banco() {
     $conn = new mysqli("localhost", "root", "", "farmacia");
     if ($conn->connect_error) die("Erro: " . $conn->connect_error);
@@ -16,49 +17,79 @@ function conectar_banco() {
 $conn = conectar_banco();
 $mensagem = "";
 
-// Criar novo usuário
+// 🔹 Criar novo usuário
 if (isset($_POST['cadastrar'])) {
-    $nome = $conn->real_escape_string($_POST['nome']);
-    $email = $conn->real_escape_string($_POST['email']);
+    $nome = trim($_POST['nome']);
+    $email = trim($_POST['email']);
     $senha = $_POST['senha'];
     $confirmar = $_POST['confirmar_senha'];
     $tipo = $_POST['tipo_usuario'];
 
     if ($senha !== $confirmar) {
-        $mensagem = "As senhas não coincidem!";
+        $mensagem = "⚠️ As senhas não coincidem!";
     } else {
-        $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
-        $sql = "INSERT INTO usuarios (nome, email, senha, tipo_usuario) VALUES ('$nome', '$email', '$senha_hash', '$tipo')";
-        $mensagem = $conn->query($sql) ? "Usuário cadastrado!" : "Erro: " . $conn->error;
+        // Verificar se e-mail já existe
+        $verifica = $conn->prepare("SELECT id FROM usuarios WHERE email = ?");
+        $verifica->bind_param("s", $email);
+        $verifica->execute();
+        $verifica->store_result();
+
+        if ($verifica->num_rows > 0) {
+            $mensagem = "⚠️ Este e-mail já está cadastrado!";
+        } else {
+            // Criptografar senha
+            $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
+
+            $sql = $conn->prepare("INSERT INTO usuarios (nome, email, senha, tipo_usuario) VALUES (?, ?, ?, ?)");
+            $sql->bind_param("ssss", $nome, $email, $senha_hash, $tipo);
+
+            if ($sql->execute()) {
+                $mensagem = "✅ Usuário cadastrado com sucesso!";
+            } else {
+                $mensagem = "❌ Erro ao cadastrar: " . $conn->error;
+            }
+
+            $sql->close();
+        }
+        $verifica->close();
     }
 }
 
-// Atualizar usuário
+// 🔹 Atualizar usuário
 if (isset($_POST['atualizar'])) {
     $id = (int) $_POST['id'];
-    $nome = $conn->real_escape_string($_POST['nome']);
-    $email = $conn->real_escape_string($_POST['email']);
+    $nome = trim($_POST['nome']);
+    $email = trim($_POST['email']);
     $tipo = $_POST['tipo_usuario'];
-    $sql = "UPDATE usuarios SET nome='$nome', email='$email', tipo_usuario='$tipo' WHERE id=$id";
-    $mensagem = $conn->query($sql) ? "Usuário atualizado!" : "Erro: " . $conn->error;
+
+    $sql = $conn->prepare("UPDATE usuarios SET nome=?, email=?, tipo_usuario=? WHERE id=?");
+    $sql->bind_param("sssi", $nome, $email, $tipo, $id);
+    $mensagem = $sql->execute() ? "✅ Usuário atualizado com sucesso!" : "❌ Erro ao atualizar.";
+    $sql->close();
 }
 
-// Deletar usuário
+// 🔹 Deletar usuário
 if (isset($_POST['deletar'])) {
     $id = (int) $_POST['id'];
-    $conn->query("DELETE FROM usuarios WHERE id=$id");
-    $mensagem = "Usuário removido!";
+    $sql = $conn->prepare("DELETE FROM usuarios WHERE id=?");
+    $sql->bind_param("i", $id);
+    $sql->execute();
+    $mensagem = "🗑️ Usuário removido!";
+    $sql->close();
 }
 
-// Buscar dados para editar
+// 🔹 Buscar usuário para edição
 $usuario_editar = null;
 if (isset($_GET['editar'])) {
     $id = (int) $_GET['editar'];
-    $res = $conn->query("SELECT * FROM usuarios WHERE id=$id");
-    $usuario_editar = $res->fetch_assoc();
+    $res = $conn->prepare("SELECT * FROM usuarios WHERE id=?");
+    $res->bind_param("i", $id);
+    $res->execute();
+    $usuario_editar = $res->get_result()->fetch_assoc();
+    $res->close();
 }
 
-// Listar usuários
+// 🔹 Listar usuários
 $usuarios = $conn->query("SELECT * FROM usuarios");
 ?>
 
@@ -67,18 +98,15 @@ $usuarios = $conn->query("SELECT * FROM usuarios");
 <head>
 <meta charset="UTF-8">
 <title>Gestão de Usuários</title>
-<!-- Importando icons -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body { font-family: Arial, sans-serif; margin: 0; background: #f2f2f2; }
-
-/* NAVBAR */
 nav { background: #0d6efd; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
 nav .logo { font-weight: bold; font-size: 18px; }
 nav ul { display: flex; list-style: none; gap: 20px; padding-left:0; margin:0; flex-wrap: wrap; }
 nav ul li a { color: white; text-decoration: none; font-weight: bold; }
-nav ul li a:hover { color:rgb(10, 10, 10); }
+nav ul li a:hover { color:#111; }
 .menu-toggle { display: none; font-size: 26px; background:none; border:none; color:white; cursor:pointer; }
 
 @media (max-width:768px){
@@ -88,35 +116,28 @@ nav ul li a:hover { color:rgb(10, 10, 10); }
     nav ul li a { display:block; padding:10px; background-color:#0d6efd; border-top:1px solid rgba(255,255,255,0.2); }
 }
 
-/* CONTAINER */
 .container { max-width: 900px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
 h2 { text-align: center; }
 
-/* FORM */
 form label { display: block; margin-top: 15px; font-weight: bold; }
 form select, input { width: 100%; padding: 8px; margin-top: 5px; border-radius: 5px; border:1px solid #ccc; }
 .senha-container { position: relative; }
-.toggle-senha { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 16px; }
-button { padding: 10px 15px; margin-top: 15px; background: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 4px; }
-button:hover { background: #45a049; }
+.toggle-senha { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; color: #0d6efd; }
+button { padding: 10px 15px; margin-top: 15px; background: #0d6efd; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: 600; }
+button:hover { background: #0b5ed7; }
 
-/* TABELA */
 table { width: 100%; margin-top: 30px; border-collapse: collapse; }
 th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
 th { background-color: #0d6efd; color:white; }
 
-/* BOTÕES */
-.msg { text-align: center; font-weight: bold; margin: 10px 0; color: green; }
-.btn { padding: 6px 10px; font-size: 16px; border: none; cursor: pointer; text-decoration:none; border-radius:5px; margin:0 2px; display:inline-block; }
-.btn.editar { background-color: #3498db; color: white; }
-.btn.editar:hover { background-color: #2980b9; }
-.btn.excluir { background-color: #e74c3c; color:white; }
-.btn.excluir:hover { background-color:#c0392b; }
+.msg { text-align: center; font-weight: bold; margin: 10px 0; color: #0d6efd; }
 
-/* FOOTER */
+.btn { padding: 6px 10px; font-size: 16px; border: none; cursor: pointer; text-decoration:none; border-radius:5px; margin:0 2px; display:inline-block; }
+.btn.editar { background-color: #198754; color: white; }
+.btn.excluir { background-color: #dc3545; color:white; }
+
 footer { background-color:#0d6efd; color:white; text-align:center; padding:15px 0; margin-top:40px; font-size:14px; }
 
-/* RESPONSIVIDADE DA TABELA */
 @media (max-width:768px){
     table, thead, tbody, th, td, tr { display:block; }
     thead { display:none; }
@@ -133,12 +154,12 @@ footer { background-color:#0d6efd; color:white; text-align:center; padding:15px 
     <button class="menu-toggle" id="menu-btn" onclick="toggleMenu()">☰</button>
     <ul id="menu">
       <li><a href="dashboard.php"><i class="bi bi-house-door-fill"></i> Início</a></li>
-        <li><a href="cadastro_usuarios.php"><i class="bi bi-person-fill"></i> Usuários</a></li>
-        <li><a href="cadastro_medicamento.php"><i class="bi bi-capsule"></i> Medicamentos</a></li>
-        <li><a href="cadastrar_fornecedor.php"><i class="bi bi-building"></i> Fornecedores</a></li>
-        <li><a href="estoque.php"><i class="bi bi-box-seam"></i> Estoque</a></li>
-        <li><a href="historico.php"><i class="bi bi-graph-up"></i> Histórico</a></li>
-        <li><a href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+      <li><a href="cadastro_usuarios.php"><i class="bi bi-person-fill"></i> Usuários</a></li>
+      <li><a href="cadastro_medicamento.php"><i class="bi bi-capsule"></i> Medicamentos</a></li>
+      <li><a href="cadastrar_fornecedor.php"><i class="bi bi-building"></i> Fornecedores</a></li>
+      <li><a href="estoque.php"><i class="bi bi-box-seam"></i> Estoque</a></li>
+      <li><a href="historico.php"><i class="bi bi-graph-up"></i> Histórico</a></li>
+      <li><a href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
     </ul>
 </nav>
 
@@ -163,14 +184,14 @@ footer { background-color:#0d6efd; color:white; text-align:center; padding:15px 
         <?php if (!$usuario_editar): ?>
         <label>Senha:</label>
         <div class="senha-container">
-            <input type="password" name="senha" required id="senha">
-            <span class="toggle-senha" onclick="toggleSenha('senha')">👁️</span>
+            <input type="password" name="senha" id="senha" required>
+            <span class="toggle-senha" onclick="toggleSenha('senha')"><i class="bi bi-eye"></i></span>
         </div>
 
         <label>Confirmar Senha:</label>
         <div class="senha-container">
-            <input type="password" name="confirmar_senha" required id="confirmar_senha">
-            <span class="toggle-senha" onclick="toggleSenha('confirmar_senha')">👁️</span>
+            <input type="password" name="confirmar_senha" id="confirmar_senha" required>
+            <span class="toggle-senha" onclick="toggleSenha('confirmar_senha')"><i class="bi bi-eye"></i></span>
         </div>
         <?php endif; ?>
 
@@ -201,13 +222,11 @@ footer { background-color:#0d6efd; color:white; text-align:center; padding:15px 
                 <td data-label="Email"><?php echo $u['email']; ?></td>
                 <td data-label="Tipo"><?php echo ucfirst($u['tipo_usuario']); ?></td>
                 <td data-label="Ações">
-                    <a href="?editar=<?php echo $u['id']; ?>" class="btn editar">✏️</a>
-                    <?php if($u['tipo_usuario'] !== 'assistenteAdmin'): ?>
+                    <a href="?editar=<?php echo $u['id']; ?>" class="btn editar"><i class="bi bi-pencil-square"></i></a>
                     <form method="post" style="display:inline">
                         <input type="hidden" name="id" value="<?php echo $u['id']; ?>">
-                        <button type="submit" name="deletar" class="btn excluir" onclick="return confirm('Tem certeza que deseja excluir?')">🗑️</button>
+                        <button type="submit" name="deletar" class="btn excluir" onclick="return confirm('Tem certeza que deseja excluir?')"><i class="bi bi-trash"></i></button>
                     </form>
-                    <?php endif; ?>
                 </td>
             </tr>
             <?php endwhile; ?>
@@ -228,7 +247,14 @@ function toggleMenu() {
 }
 function toggleSenha(id) {
     const input = document.getElementById(id);
-    input.type = input.type === "password" ? "text" : "password";
+    const icon = input.nextElementSibling.querySelector('i');
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.replace('bi-eye', 'bi-eye-slash');
+    } else {
+        input.type = "password";
+        icon.classList.replace('bi-eye-slash', 'bi-eye');
+    }
 }
 </script>
 </body>
